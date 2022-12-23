@@ -16,6 +16,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Notes.md" />
+    <None Include="res\shader\vertex.shader" />
+    <None Include="res\shader\fragment.shader" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\learnopgl.cpp">
@@ -24,5 +26,13 @@
     <ClCompile Include="src\glad.c">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="src\shader.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\shader.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
