@@ -75,3 +75,15 @@ in/out type name;
 对于顶点缓冲区，特别地需要layout(index)以表达顶点属性输入。
 ### uniform 变量
 uniform type name; 此名称是全局的，并能够从cpu函数中修改。
+
+## 纹理
+我们需要指定三角形的每个顶点各自对应纹理的哪个部分。这样每个顶点就会关联着一个纹理坐标(Texture Coordinate)，用来标明该从纹理图像的哪个部分采样。之后在图形的其它片段上进行片段插值(Fragment Interpolation)。
+
+将纹理的像素texel映射为纹理坐标的过程称作纹理过滤，以使其分辨率无关。
+GL_NEAREST（也叫邻近过滤，Nearest Neighbor Filtering）是OpenGL默认的纹理过滤方式。
+GL_LINEAR（也叫线性过滤，(Bi)linear Filtering）它会基于纹理坐标附近的纹理像素，计算出一个插值。
+### 多级渐远纹理
+为了形成远近清晰和模糊的分野，使用此方法
+![](2022-12-23-23-33-41.png)
+### 纹理单元
+通过给sample2D变量（采样器）赋值设置多个纹理。一个纹理的位置值通常称为一个纹理单元。

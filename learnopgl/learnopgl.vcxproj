@@ -159,6 +159,7 @@
   <ItemGroup>
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\learnopgl.cpp" />
+    <ClCompile Include="src\stb_image.cpp" />
     <ClCompile Include="src\shader.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -168,6 +169,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\shader.h" />
+    <ClInclude Include="src\stb_image.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\pic\awesomeface.png" />
+    <Image Include="res\pic\container.jpg" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
