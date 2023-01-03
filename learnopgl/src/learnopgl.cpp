@@ -7,6 +7,27 @@
 #include <sstream>
 #include "shader.h"
 #include "stb_image.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+#define uint32 unsigned int
+#define ASSERT(x) if (!(x)) __debugbreak();
+#define GLCall(x) GLClearError();\
+	x;\
+	ASSERT(GLLogCall(#x, __FILE__,__LINE__))
+void GLClearError() {
+	while (glGetError() != GL_NO_ERROR) {
+	}
+}
+bool GLLogCall(const char* function, const char* filename, int line) {
+	while (GLenum error = glGetError()) {
+		std::cout << "error : " << function << " line:" << line << " error: " << error << " " << std::endl;
+		return false;
+	}
+	return true;
+}
+
 #define uint32 unsigned int
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height); // 当窗口大小改变时调用
@@ -14,6 +35,17 @@ void processInput(GLFWwindow *window);//返回esc按键是否正在被按下
 void load_texturepic(const char* fpath,uint32 type); //加载纹理图片
 int main()
 {
+	// test glm
+	//glm::mat4 trans = glm::mat4(1.0f); // 单位矩阵
+	//glm::vec4 vec(1.0f, 0.0f, 0.0f, 1.0f);
+	//trans = glm::translate(trans, glm::vec3(1.0f, 1.0f, 0.0f));
+	//vec = trans * vec;
+	//std::cout << vec.x << vec.y << vec.z << std::endl;
+
+	// trans the box 
+	//glm::mat4 trans;
+	//trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0));
+	//trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5));
 
 	glfwInit(); //初始化GLFW
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // GLFW配置(hint,value)
@@ -39,7 +71,7 @@ int main()
 	}
 	// 定义视口，一般和窗口大小相同
 
-	glViewport(0, 0, 800, 600);
+	GLCall(glViewport(0, 0, 800, 600));
 	// 注册回调
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
@@ -53,47 +85,45 @@ int main()
 	};
 	// 纹理
 	float vertices[] = {
-		// positions          // colors           // texture coords
-		 0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // top right
-		 0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f, // bottom right
-		-0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f, // bottom left
-		-0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f  // top left 
+		// positions               // texture coords
+		 0.5f,  0.5f, 0.0f,    1.0f, 1.0f, // top right
+		 0.5f, -0.5f, 0.0f,	   1.0f, 0.0f, // bottom right
+		-0.5f, -0.5f, 0.0f,    0.0f, 0.0f, // bottom left
+		-0.5f,  0.5f, 0.0f,    0.0f, 1.0f  // top left 
 	};
 	//绑定顶点数组对象
 	unsigned int VAO;
-	glGenVertexArrays(1, &VAO);
-	glBindVertexArray(VAO);
+	GLCall(glGenVertexArrays(1, &VAO));
+	GLCall(glBindVertexArray(VAO));
 	// 绑定顶点缓冲区
 	unsigned int VBO;
-	glGenBuffers(1, &VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	GLCall(glGenBuffers(1, &VBO));
+	GLCall(glBindBuffer(GL_ARRAY_BUFFER, VBO));
+	GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW));
 	// 元素缓冲对象
 	unsigned int EBO;
-	glGenBuffers(1, &EBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+	GLCall(glGenBuffers(1, &EBO));
+	GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO));
+	GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW));
 
 	// 设置顶点属性指针
-// 位置属性
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-	// 颜色属性
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
+	// 位置属性
+	GLCall(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0));
+	GLCall(glEnableVertexAttribArray(0));
+
 	// 纹理属性
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-	glEnableVertexAttribArray(2);
+	GLCall(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float))));
+	GLCall(glEnableVertexAttribArray(1));
 
 	//绑定纹理
 	unsigned int texture1;
-	glGenTextures(1, &texture1);
-	glBindTexture(GL_TEXTURE_2D, texture1);
+	GLCall(glGenTextures(1, &texture1));
+	GLCall(glBindTexture(GL_TEXTURE_2D, texture1));
 	// 为当前绑定的纹理对象设置环绕、过滤方式
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
+	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
+	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
 	stbi_set_flip_vertically_on_load(true);
 
 	load_texturepic("res/pic/container.jpg", GL_RGB);
@@ -101,13 +131,13 @@ int main()
 
 	// 纹理2
 	unsigned int texture2;
-	glGenTextures(1, &texture2);
-	glBindTexture(GL_TEXTURE_2D, texture2);
+	GLCall(glGenTextures(1, &texture2));
+	GLCall(glBindTexture(GL_TEXTURE_2D, texture2));
 	// 为当前绑定的纹理对象设置环绕、过滤方式
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
+	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
+	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
 	load_texturepic("res/pic/awesomeface.png", GL_RGBA);
 
 	
@@ -117,34 +147,42 @@ int main()
 
 	// 激活着色器
 	shader.use();
+	// 设置transform uniform
+	unsigned int transformLoc = glGetUniformLocation(shader.ID, "transform");
+
 	// 设置uniform
-	glUniform1i(glGetUniformLocation(shader.ID, "texture1"), 0); // 手动设置
-	shader.setInt("texture2", 1); // 或者使用着色器类设置	// 渲染循环
+	GLCall(glUniform1i(glGetUniformLocation(shader.ID, "texture1"), 0)); // 手动设置
+	shader.setInt("texture2", 1); // 或者使用着色器类设置	
+
+	// 渲染循环
 	while (!glfwWindowShouldClose(window))
 	{
 		processInput(window);
 		// 渲染代码
 
 		// 清空颜色缓冲
-
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f); //背景
-		glClear(GL_COLOR_BUFFER_BIT); //GL_COLOR_BUFFER_BIT，GL_DEPTH_BUFFER_BIT和GL_STENCIL_BUFFER_BIT
+		glm::mat4 trans = glm::mat4(1.0f);
+		trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
+		trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
+		GLCall(glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans)));
+		GLCall(glClearColor(0.2f, 0.3f, 0.3f, 1.0f)); //背景
+		GLCall(glClear(GL_COLOR_BUFFER_BIT)); //GL_COLOR_BUFFER_BIT，GL_DEPTH_BUFFER_BIT和GL_STENCIL_BUFFER_BIT
 				// 绑定纹理
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texture1);
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, texture2);
-
-		// 绑定VAO
+				// 绑定VAO
 		shader.use();
-		glBindVertexArray(VAO);
+		GLCall(glBindVertexArray(VAO));
+		GLCall(glActiveTexture(GL_TEXTURE0));
+		GLCall(glBindTexture(GL_TEXTURE_2D, texture1));
+		GLCall(glActiveTexture(GL_TEXTURE1));
+		GLCall(glBindTexture(GL_TEXTURE_2D, texture2));
+		GLCall(glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans)));
 
 		//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 		// 使用线框模式
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
 
 
 
@@ -162,11 +200,11 @@ int main()
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
-	glViewport(0, 0, width, height);
+	GLCall(glViewport(0, 0, width, height));
 }
 void setpos_callback(GLFWwindow* window, double width, double height)
 {
-	glViewport(0, 0, width, height);
+	GLCall(glViewport(0, 0, width, height));
 }
 void processInput(GLFWwindow *window)
 {
@@ -179,8 +217,8 @@ void load_texturepic(const char* fpath,uint32 type) {
 	unsigned char *data1 = stbi_load(fpath, &width1, &height1, &nrChannels1, 0);
 	if (data1)
 	{
-		glTexImage2D(GL_TEXTURE_2D, 0, type, width1, height1, 0, type, GL_UNSIGNED_BYTE, data1);
-		glGenerateMipmap(GL_TEXTURE_2D);
+		GLCall(glTexImage2D(GL_TEXTURE_2D, 0, type, width1, height1, 0, type, GL_UNSIGNED_BYTE, data1));
+		GLCall(glGenerateMipmap(GL_TEXTURE_2D));
 	}
 	else
 	{
