@@ -15,7 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Notes.md" />
     <None Include="res\shader\vertex.shader" />
     <None Include="res\shader\fragment.shader" />
     <None Include="dependency\include\glm\detail\func_common.inl">

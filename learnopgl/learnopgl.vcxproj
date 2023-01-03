@@ -300,7 +300,6 @@
     <None Include="dependency\include\glm\gtx\vector_angle.inl" />
     <None Include="dependency\include\glm\gtx\vector_query.inl" />
     <None Include="dependency\include\glm\gtx\wrap.inl" />
-    <None Include="Notes.md" />
     <None Include="res\shader\vertex.shader" />
     <None Include="res\shader\fragment.shader" />
   </ItemGroup>
