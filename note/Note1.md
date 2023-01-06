@@ -126,3 +126,6 @@ GL_LINEAR（也叫线性过滤，(Bi)linear Filtering）它会基于纹理坐标
 #### 投影：透视投影
 ![](2023-01-03-22-12-42.png)
 透视矩阵的求法参见http://www.songho.ca/opengl/gl_projectionmatrix.html
+
+glm提供了perspective方法来求。
+## 观察矩阵

@@ -586,6 +586,7 @@
     <ClInclude Include="dependency\include\glm\vec3.hpp" />
     <ClInclude Include="dependency\include\glm\vec4.hpp" />
     <ClInclude Include="dependency\include\glm\vector_relational.hpp" />
+    <ClInclude Include="src\camera.h" />
     <ClInclude Include="src\shader.h" />
     <ClInclude Include="src\stb_image.h" />
   </ItemGroup>

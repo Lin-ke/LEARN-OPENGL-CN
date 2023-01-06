@@ -6,6 +6,7 @@
 #include <fstream>
 #include <sstream>
 #include "shader.h"
+#include "camera.h"
 #include "stb_image.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -30,13 +31,28 @@ bool GLLogCall(const char* function, const char* filename, int line) {
 
 #define uint32 unsigned int
 
+// 屏幕设置
+const float screenWidth = 800;
+const float screenHeight = 600;
+// camera
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+float lastX = screenWidth / 2.0f;
+float lastY = screenHeight / 2.0f;
+bool firstMouse = true;
+
+// timing
+float deltaTime = 0.0f;	// time between current frame and last frame
+float lastFrame = 0.0f;
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height); // 当窗口大小改变时调用
-void processInput(GLFWwindow *window);//返回esc按键是否正在被按下
+void mouse_callback(GLFWwindow* window, double xposIn, double yposIn); // 鼠标
+// glfw: 鼠标滚轮回调
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+void processInput(GLFWwindow *window);//键盘输入回调
 void load_texturepic(const char* fpath,uint32 type); //加载纹理图片
 int main()
 {
-	float screenWidth = 800;
-	float screenHeight = 600;
+
 	//// 模型矩阵：物体坐标-世界坐标
 	//glm::mat4 model = glm::mat4(1.0f);
 	//model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -74,9 +90,13 @@ int main()
 	}
 	// 定义视口，一般和窗口大小相同
 
-	GLCall(glViewport(0, 0, 800, 600));
+	GLCall(glViewport(0, 0, screenWidth, screenHeight));
 	// 注册回调
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	glfwSetCursorPosCallback(window, mouse_callback);
+	glfwSetScrollCallback(window, scroll_callback);
+	// 捕获鼠标
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	// 开启深度测试
 	glEnable(GL_DEPTH_TEST); 
 	//unsigned int indices[] = {
@@ -199,9 +219,19 @@ int main()
 	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
 	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
 	load_texturepic("res/pic/awesomeface.png", GL_RGBA);
+	//// 摄像机测试
+	//glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+	//// 摄像机方向
+	//glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+	//glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
+	//// 右方向（格拉姆施密特）
+	//// trick : 用一个0,0,1和摄像机方向cross product（右手系）
+	//glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+	//glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraDirection));
+	//// 上方向
+	//glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
+	// view matrix
 
-	
-	
 	// 编译着色器
 	Shader shader("res/shader/vertex.shader", "res/shader/fragment.shader");
 
@@ -213,18 +243,14 @@ int main()
 	// 设置uniform
 	GLCall(glUniform1i(glGetUniformLocation(shader.ID, "texture1"), 0)); // 手动设置
 	shader.setInt("texture2", 1); // 或者使用着色器类设置	
-	// 设置uniform变量
-	//int modelLoc = glGetUniformLocation(shader.ID, "model");
-	//int viewLoc = glGetUniformLocation(shader.ID, "view");
-	//int projLoc = glGetUniformLocation(shader.ID, "projection");
-	//glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-	//glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-	//glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 	// 渲染循环
 	while (!glfwWindowShouldClose(window))
 	{
 		processInput(window);
 		// 渲染代码
+		float currentFrame = static_cast<float>(glfwGetTime());
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
 
 		// 清空颜色缓冲
 
@@ -232,25 +258,19 @@ int main()
 		
 		// 清除深度缓冲和颜色缓冲
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-				// 绑定纹理
+		// 绑定纹理
 
 		GLCall(glActiveTexture(GL_TEXTURE0));
 		GLCall(glBindTexture(GL_TEXTURE_2D, texture1));
 		GLCall(glActiveTexture(GL_TEXTURE1));
 		GLCall(glBindTexture(GL_TEXTURE_2D, texture2));
 		shader.use();
-
-
-		/*glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));*/
 		// create transformations
-		glm::mat4 view = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+		glm::mat4 view = camera.GetViewMatrix();
 		glm::mat4 projection = glm::mat4(1.0f);
-		projection = glm::perspective(glm::radians(45.0f), screenWidth/screenHeight, 0.1f, 100.0f);
-		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+		projection = glm::perspective(glm::radians(camera.Zoom), screenWidth/screenHeight, 0.1f, 100.0f);
 		// pass transformation matrices to the shader
-		shader.setMat4("projection", projection); // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
+		shader.setMat4("projection", projection);// 投影矩阵一般不变，无需每帧设置
 		shader.setMat4("view", view);
 		//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 		// 使用线框模式
@@ -295,8 +315,47 @@ void setpos_callback(GLFWwindow* window, double width, double height)
 }
 void processInput(GLFWwindow *window)
 {
+	// esc关闭窗口
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
+	// wasd移动
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		camera.ProcessKeyboard(FORWARD, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		camera.ProcessKeyboard(BACKWARD, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		camera.ProcessKeyboard(LEFT, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		camera.ProcessKeyboard(RIGHT, deltaTime);
+}
+// glfw 鼠标回调
+// -------------------------------------------------------
+void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
+{
+	float xpos = static_cast<float>(xposIn);
+	float ypos = static_cast<float>(yposIn);
+
+	if (firstMouse)
+	{
+		lastX = xpos;
+		lastY = ypos;
+		firstMouse = false;
+	}
+
+	float xoffset = xpos - lastX;
+	float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+
+	lastX = xpos;
+	lastY = ypos;
+
+	camera.ProcessMouseMovement(xoffset, yoffset);
+}
+
+// glfw: 鼠标滚轮回调
+// ----------------------------------------------------------------------
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+	camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
 void load_texturepic(const char* fpath,uint32 type) {
 	// 加载并生成纹理
