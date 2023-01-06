@@ -207,10 +207,6 @@ int main()
 	stbi_set_flip_vertically_on_load(true);
 
 	load_texturepic("res/pic/container.jpg", GL_RGB);
-	
-	glm::vec4 v = glm::vec4(0.0f, 0, 1, 1);
-	auto lc = glm::lookAt(glm::vec3(1, 1, 0.0f), glm::vec3(0.0f, 0, 0), glm::vec3(0, 0, 1.0f));
-	std::cout << glm::to_string(lc) << glm::to_string(lc*v);
 	// 纹理2
 	unsigned int texture2;
 	GLCall(glGenTextures(1, &texture2));
