@@ -129,3 +129,5 @@ GL_LINEAR（也叫线性过滤，(Bi)linear Filtering）它会基于纹理坐标
 
 glm提供了perspective方法来求。
 ## 观察矩阵
+参见教程。
+glm提供了lookAt方法来求。
