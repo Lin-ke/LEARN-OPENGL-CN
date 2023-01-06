@@ -208,7 +208,9 @@ int main()
 
 	load_texturepic("res/pic/container.jpg", GL_RGB);
 	
-
+	glm::vec4 v = glm::vec4(0.0f, 0, 1, 1);
+	auto lc = glm::lookAt(glm::vec3(1, 1, 0.0f), glm::vec3(0.0f, 0, 0), glm::vec3(0, 0, 1.0f));
+	std::cout << glm::to_string(lc) << glm::to_string(lc*v);
 	// 纹理2
 	unsigned int texture2;
 	GLCall(glGenTextures(1, &texture2));
@@ -268,6 +270,7 @@ int main()
 		// create transformations
 		glm::mat4 view = camera.GetViewMatrix();
 		glm::mat4 projection = glm::mat4(1.0f);
+
 		projection = glm::perspective(glm::radians(camera.Zoom), screenWidth/screenHeight, 0.1f, 100.0f);
 		// pass transformation matrices to the shader
 		shader.setMat4("projection", projection);// 投影矩阵一般不变，无需每帧设置
