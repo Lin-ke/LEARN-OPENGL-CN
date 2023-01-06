@@ -15,8 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="res\shader\vertex.shader" />
-    <None Include="res\shader\fragment.shader" />
     <None Include="dependency\include\glm\detail\func_common.inl">
       <Filter>头文件</Filter>
     </None>
@@ -425,6 +423,10 @@
     <None Include="dependency\include\glm\gtx\wrap.inl">
       <Filter>头文件</Filter>
     </None>
+    <None Include="res\shader\lighting.fs" />
+    <None Include="res\shader\lighting.vs" />
+    <None Include="res\shader\light_cube.vs" />
+    <None Include="res\shader\light_cube.fs" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\learnopgl.cpp">
