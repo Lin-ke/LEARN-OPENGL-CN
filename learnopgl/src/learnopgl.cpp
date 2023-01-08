@@ -187,7 +187,12 @@ int main()
 		lightingShader.setVec3("light.ambient", ambientColor);
 		lightingShader.setVec3("light.diffuse", diffuseColor);
 		lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-		
+		// 教程给出的青色塑料的例子：
+		//lightingShader.setVec3("material.ambient", 0.0f, 0.1f, 0.06f);
+		//lightingShader.setVec3("material.diffuse", 0.0f, 0.50980392f, 0.50980392f);
+		//lightingShader.setVec3("material.specular", 0.50196078f, 0.50196078f, 0.50196078f);
+		//lightingShader.setFloat("material.shininess", 32.0f);
+
 		// 光源位置
 		lightingShader.setVec3("light.position", lightPos);
 		// 观察者位置
