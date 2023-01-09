@@ -126,6 +126,19 @@ int main()
 		-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  0.0f,
 		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f
 	};
+	// 正方体位置
+	glm::vec3 cubePositions[] = {
+	glm::vec3(0.0f,  0.0f,  0.0f),
+	glm::vec3(2.0f,  5.0f, -15.0f),
+	glm::vec3(-1.5f, -2.2f, -2.5f),
+	glm::vec3(-3.8f, -2.0f, -12.3f),
+	glm::vec3(2.4f, -0.4f, -3.5f),
+	glm::vec3(-1.7f,  3.0f, -7.5f),
+	glm::vec3(1.3f, -2.0f, -2.5f),
+	glm::vec3(1.5f,  2.0f, -2.5f),
+	glm::vec3(1.5f,  0.2f, -1.5f),
+	glm::vec3(-1.3f,  1.0f, -1.5f)
+	};
 	// 方块的vao和vbo
 	unsigned int VBO, cubeVAO;
 	glGenVertexArrays(1, &cubeVAO);
@@ -157,12 +170,12 @@ int main()
 	glEnableVertexAttribArray(0);
 	// 加载并使用纹理
 	unsigned int diffuseMap = loadTexture("res/pic/container2.png");
-	lightingShader.setInt("material.diffuse", 0);
 	unsigned int specularMap = loadTexture("res/pic/container2_specular.png");
+	lightingShader.use();
+	
+	lightingShader.setInt("material.diffuse", 0);
+	
 	lightingShader.setInt("material.specular", 1);
-	unsigned int emissionMap = loadTexture("res/pic/matrix.jpg");
-	std::cout << emissionMap;
-	lightingShader.setInt("emission", 2);
 	// render loop
 	// -----------
 	while (!glfwWindowShouldClose(window))
@@ -183,21 +196,28 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		// 设置方块颜色等
 		lightingShader.use();
+		// 镜面反射使用的系数
 		lightingShader.setFloat("material.shininess", 32.0f);
-
+	
+		// 观察者位置
+		lightingShader.setVec3("viewPos", camera.Position);
+		// 光的属性
+		// 光源方向(平行光使用)
+		lightingShader.setVec3("light.position", camera.Position);
+		// 光源位置（点光源使用）
+		lightingShader.setVec3("light.direction", camera.Front);
+		// 聚光使用
+		lightingShader.setFloat("light.cutOff", glm::cos(glm::radians(12.5f)));
+		lightingShader.setFloat("light.outerCutOff", glm::cos(glm::radians(17.5f)));
 		// 设置光色和各反射所用的光照强度
-
-		// light properties
 		lightingShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
 		lightingShader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
 		lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+		// 衰减
+		lightingShader.setFloat("light.constant", 1.0f);
+		lightingShader.setFloat("light.linear", 0.09f);
+		lightingShader.setFloat("light.quadratic", 0.032f);
 
-
-
-		// 光源位置
-		lightingShader.setVec3("light.position", lightPos);
-		// 观察者位置
-		lightingShader.setVec3("viewPos", camera.Position);
 		// view/projection transformations
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 		glm::mat4 view = camera.GetViewMatrix();
@@ -210,16 +230,21 @@ int main()
 		// 设置纹理
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, diffuseMap);
-		lightingShader.setInt("material.diffuse", 0);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, specularMap);
-		lightingShader.setInt("material.specular", 1);
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, emissionMap);
-		lightingShader.setInt("emission", 2);
 		// render the cube
 		glBindVertexArray(cubeVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		for (unsigned int i = 0; i < 10; i++)
+		{
+			glm::mat4 model = glm::mat4(1.0f); // 一定要注意这个初始化方式
+			model = glm::translate(model, cubePositions[i]);
+			float angle = 20.0f * i;
+			model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+			lightingShader.setMat4("model", model);
+
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
+
 
 
 		// 灯
