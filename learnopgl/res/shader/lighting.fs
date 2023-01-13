@@ -1,10 +1,22 @@
 #version 330 core
 out vec4 FragColor;
 
-uniform vec3 objectColor;
-uniform vec3 lightColor;
+in vec2 TexCoords;
 
-void main()
+float near = 0.1; 
+float far  = 10.0; 
+uniform sampler2D texture1;
+float LinearizeDepth(float depth) 
 {
-	FragColor = vec4(lightColor * objectColor, 1.0);
+    float z = depth * 2.0 - 1.0; // back to NDC 
+    return (2.0 * near * far) / (far + near - z * (far - near));    
+}
+void main()
+{    
+    //FragColor = texture(texture1, TexCoords);
+	// 可视化深度坐标
+    // FragColor = vec4(vec3(gl_FragCoord.z), 1.0);
+	// 让深度和坐标成线性关系,并令near = 0
+	float depth = LinearizeDepth(gl_FragCoord.z) / far; // 为了演示除以 far
+    FragColor = vec4(vec3(depth), 1.0);
 }
