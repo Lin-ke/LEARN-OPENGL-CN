@@ -78,55 +78,61 @@ int main()
 	// 启用混合
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // （全局使用）
+	// 面剔除
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_FRONT); // 剔除正向面
+ 	glFrontFace(GL_CCW);  // 逆时针(counter clock wise)是正向（默认）
+
 	// build and compile shaders
 	// -------------------------
 	Shader shader("./res/shader/lighting.vs","./res/shader/lighting.fs");
 
 	// set up vertex data (and buffer(s)) and configure vertex attributes
 	// ------------------------------------------------------------------
+	// 逆时针顺序渲染每个三角形
 	float cubeVertices[] = {
-		// positions          // texture Coords
-		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-		 0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-		 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-		 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-		 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-		-0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-
-		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-		-0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-		 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-		 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-		 0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-		 0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-		 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-		 0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-		 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-		 0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-
-		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-		 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-		 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-		-0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+		// Back face
+		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f, // Bottom-left
+		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
+		 0.5f, -0.5f, -0.5f,  1.0f, 0.0f, // bottom-right         
+		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right
+		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f, // bottom-left
+		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f, // top-left
+		// Front face
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-left
+		 0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // bottom-right
+		 0.5f,  0.5f,  0.5f,  1.0f, 1.0f, // top-right
+		 0.5f,  0.5f,  0.5f,  1.0f, 1.0f, // top-right
+		-0.5f,  0.5f,  0.5f,  0.0f, 1.0f, // top-left
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-left
+		// Left face
+		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-right
+		-0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-left
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-left
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-left
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-right
+		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-right
+		// Right face
+		 0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-left
+		 0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-right
+		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right         
+		 0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // bottom-right
+		 0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // top-left
+		 0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-left     
+		// Bottom face
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // top-right
+		 0.5f, -0.5f, -0.5f,  1.0f, 1.0f, // top-left
+		 0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // bottom-left
+		 0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // bottom-left
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // bottom-right
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f, // top-right
+		// Top face
+		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f, // top-left
+		 0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // bottom-right
+		 0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // top-right     
+		 0.5f,  0.5f,  0.5f,  1.0f, 0.0f, // bottom-right
+		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f, // top-left
+		-0.5f,  0.5f,  0.5f,  0.0f, 0.0f  // bottom-left        
 	};
 	float planeVertices[] = {
 		// positions          // texture Coords (note we set these higher than 1 (together with GL_REPEAT as texture wrapping mode). this will cause the floor texture to repeat)

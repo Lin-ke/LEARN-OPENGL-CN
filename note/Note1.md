@@ -259,3 +259,9 @@ Tips:
 // 公式1 即glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
  为了解决混合与深度测试冲突的问题，从后向前渲染。
+
+## 面剔除
+提升渲染效率可以丢弃一些不可见面。规定一个对于观察者渲染的方向是正向，比如默认的逆时针，
+他的背面的图元将以顺时针方向渲染。函数是
+glEnable(GL_CULL_FACE);
+glCullFace(GL_FRONT);
