@@ -8,7 +8,8 @@ uniform mat4 view;
 
 void main()
 {
-// 这点很特殊
     TexCoords = aPos;
-    gl_Position = projection * view * vec4(aPos, 1.0);
+    vec4 pos = projection * view * vec4(aPos, 1.0);
+    //gl_Position = pos; //如果在前面渲染天空盒
+	gl_Position = pos.xyww;
 }
