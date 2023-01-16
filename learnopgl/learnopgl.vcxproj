@@ -300,10 +300,10 @@
     <None Include="dependency\include\glm\gtx\vector_angle.inl" />
     <None Include="dependency\include\glm\gtx\vector_query.inl" />
     <None Include="dependency\include\glm\gtx\wrap.inl" />
-    <None Include="res\shader\fb.fs" />
-    <None Include="res\shader\fb.vs" />
     <None Include="res\shader\lighting.vs" />
     <None Include="res\shader\lighting.fs" />
+    <None Include="res\shader\sky.fs" />
+    <None Include="res\shader\sky.vs" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dependency\include\glm\common.hpp" />
