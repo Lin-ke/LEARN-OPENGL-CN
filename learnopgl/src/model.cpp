@@ -163,7 +163,9 @@ unsigned int TextureFromFile(const char *path, const std::string &directory, boo
 			format = GL_RGB;
 		else if (nrComponents == 4)
 			format = GL_RGBA;
-
+		// format选择srgb进行gamma矫正。
+		//比如diffuse纹理，这种为物体上色的纹理几乎都是在sRGB空间中的,不用矫正。
+		//而为了获取光照参数的纹理，像specular贴图和法线贴图几乎都在线性空间中，需要矫正。
 		glBindTexture(GL_TEXTURE_2D, textureID);
 		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);

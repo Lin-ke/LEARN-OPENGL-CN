@@ -74,7 +74,8 @@ int main()
 	// 启用深度测试
 	// -----------------------------
 	glEnable(GL_DEPTH_TEST);
-
+	// 由于纹理作者创建纹理的时候就考虑到了gamma矫正，这里无需再矫正一次了。
+	glEnable(GL_FRAMEBUFFER_SRGB);
 	// build and compile our shader zprogram
 	// ------------------------------------
 	// 物体的shader
