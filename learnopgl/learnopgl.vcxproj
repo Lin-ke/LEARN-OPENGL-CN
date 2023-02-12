@@ -300,8 +300,8 @@
     <None Include="dependency\include\glm\gtx\vector_angle.inl" />
     <None Include="dependency\include\glm\gtx\vector_query.inl" />
     <None Include="dependency\include\glm\gtx\wrap.inl" />
-    <None Include="res\shader\light_cube.fs" />
-    <None Include="res\shader\light_cube.vs" />
+    <None Include="res\shader\screen.fs" />
+    <None Include="res\shader\screen.vs" />
     <None Include="res\shader\lighting.vs" />
     <None Include="res\shader\lighting.fs" />
     <None Include="res\shader\shadering_single.fs" />

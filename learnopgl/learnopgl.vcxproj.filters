@@ -425,9 +425,9 @@
     </None>
     <None Include="res\shader\lighting.fs" />
     <None Include="res\shader\lighting.vs" />
-    <None Include="res\shader\light_cube.vs" />
-    <None Include="res\shader\light_cube.fs" />
     <None Include="res\shader\shadering_single.fs" />
+    <None Include="res\shader\screen.fs" />
+    <None Include="res\shader\screen.vs" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\learnopgl.cpp">

@@ -38,6 +38,8 @@ OpenGL着色器是用OpenGL着色器语言(OpenGL Shading Language, GLSL)写成�
 5. **裁切**(Clipping)。裁切会丢弃超出你的视图以外的所有像素，用来提升执行效率。
 6. **片段着色器**的主要目的是计算一个像素的最终颜色，这也是所有OpenGL高级效果产生的地方。通常，片段着色器包含3D场景的数据（比如光照、阴影、光的颜色等等），这些数据可以被用来计算最终像素的颜色。
 7. 在所有对应颜色值确定以后，最终的对象将会被传到最后一个阶段，我们叫做Alpha测试和混合(Blending)阶段。这个阶段检验某个像素深度以判断是否改被丢弃，并检查alpha值以混合。
+![File](file.png)
+
 ### VBO
 顶点缓冲对象存储顶点信息。每个类型可以绑定一个vbo
 ### 两个着色器的编译
@@ -447,3 +449,35 @@ in gl_Vertex
 glVertexAttribDivisor。这个函数告诉了OpenGL该什么时候更新顶点属性的内容至新一组数据
 。它的第一个参数是需要的顶点属性，第二个参数是属性除数(Attribute Divisor)。默认情况下，属性除数是0，告诉OpenGL我们需要在顶点着色器的每次迭代时更新顶点属性。将它设置为1时，我们告诉OpenGL我们希望在渲染一个新实例的时候更新顶点属性。而设置为2时，我们希望每2个实例更新一次属性，以此类推。
 我们将属性除数设置为1，是在告诉OpenGL，处于位置值2的顶点属性是一个实例化数组。
+
+## 抗锯齿
+边缘出现锯齿状渲染称为“走样”Aliasing。有多种技术可以Anti走样：
+1. 超采样抗锯齿(Super Sample Anti-aliasing, SSAA)，先以更高分辨率
+渲染场景，再下采样
+2. 多重采样抗锯齿(Multisample Anti-aliasing, MSAA)。
+
+光栅器是位于最终处理过的顶点之后到片段着色器之前所经过的所有的算法与过程的总和。光栅器会将一个图元的所有顶点作为输入，并将它转换为一系列的片段。顶点坐标理论上可以取任意值，但片段不行，因为它们受限于你窗口的分辨率。顶点坐标与片段之间几乎永远也不会有一对一的映射，
+所以光栅器必须以某种方式来决定每个顶点最终所在的片段/屏幕坐标。
+![Anti Aliasing Rasterization](anti_aliasing_rasterization.png)
+如图中像素格子和中心的采样点是用来判断这个像素是否属于这个三角形内部。这导致了渲染结果：
+
+![Anti Aliasing Rasterization Filled](anti_aliasing_rasterization_filled.png)
+### MSAA
+多重采样做的是将单一的采样点变为多个采样点。我们将用这些子采样点来决定像素的遮盖度。当然，这也意味着颜色缓冲的大小会随着子采样点的增加而增加。
+![Anti Aliasing Sample Points](anti_aliasing_sample_points.png)
+MSAA决定像素颜色只需要运行一次片段着色器，即使用像素中心的那个顶点，得到的结果颜色
+存储在每个遮盖的子采样点中。当颜色缓冲的子样本被图元的所有颜色填满时，所有的这些颜色将会在每个像素内部平均化。因为上图的4个采样点中只有2个被遮盖住了，这个像素的颜色将会是三角形颜色与其他两个采样点的颜色（在这里是无色）的平均值，最终形成一种淡蓝色。
+### MSAA 在opengl中
+在窗口创建前hint，并glEnable(GL_MULTISAMPLE);
+### 离屏MSAA
+有两种方式可以创建多重采样缓冲，将其作为帧缓冲的附件：纹理附件和渲染缓冲附件，如帧缓冲处所叙述。
+#### 使用纹理附件MSAA
+glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, tex);
+glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, GL_RGB, width, height, GL_TRUE);
+glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+并使用
+glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, tex, 0);
+#### 使用渲染缓冲附件MSAA
+使用
+glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, width, height);
+而非glRenderbufferStorage。
