@@ -481,3 +481,12 @@ glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTI
 使用
 glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, width, height);
 而非glRenderbufferStorage。
+
+# 光照
+## blinn phong模型
+但是它的镜面反射会在一些情况下出现问题，特别是物体反光度很低时，会导致大片（粗糙的）高光区域。
+而且会有一道明显的分界线。原因是：phone模型当观察向量和反射向量间的夹角>90度就会将镜面光分量置0，而
+事实上这点在反光度比较小的物体上的作用是比较显著的，以至于形成一道分界线。
+![Eyebigger90](eyebigger90.png)
+Blinn-Phong模型不再依赖于反射向量，而是采用了所谓的半程向量(Halfway Vector)，即光线与视线夹角一半方向上的一个单位向量。当半程向量与法线向量越接近时，镜面光分量就越大。
+它与法线的夹角就是视线和反射光夹角的一半。

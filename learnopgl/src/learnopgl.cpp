@@ -2,7 +2,7 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-
+#include <glm/gtx/string_cast.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -22,7 +22,8 @@ unsigned int loadTexture(char const * path);
 // 窗口设置
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
-
+bool blinn = false;
+bool blinnKeyPressed = false;
 // 相机
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 float lastX = SCR_WIDTH / 2.0f;
@@ -34,7 +35,7 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 // lighting
-glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+glm::vec3 lightPos(1.2f, 11.0f, 2.0f);
 
 int main()
 {
@@ -78,9 +79,7 @@ int main()
 	// ------------------------------------
 	// 物体的shader
 	Shader lightingShader("./res/shader/lighting.vs", "./res/shader/lighting.fs");
-	// 灯的shader
-	Shader lightCubeShader("./res/shader/light_cube.vs", "./res/shader/light_cube.fs");
-
+	
 	// 模型
 	Model ourModel("./res/model/keli.pmx");
 	
@@ -109,14 +108,17 @@ int main()
 		glm::mat4 view = camera.GetViewMatrix();
 		lightingShader.setMat4("projection", projection);
 		lightingShader.setMat4("view", view);
-
+		lightingShader.setInt("blinn", blinn);
+		lightingShader.setVec3("viewPos", camera.Position);
+		lightingShader.setVec3("lightPos", lightPos);
+		std::cout << glm::to_string(camera.Position)<<std::endl;
 		// render the loaded model
 		glm::mat4 model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
 		model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
 		lightingShader.setMat4("model", model);
 		ourModel.Draw(lightingShader);
-
+		std::cout << (blinn ? "Blinn-Phong" : "Phong") << std::endl;
 
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		// -------------------------------------------------------------------------------
@@ -145,6 +147,15 @@ void processInput(GLFWwindow *window)
 		camera.ProcessKeyboard(LEFT, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera.ProcessKeyboard(RIGHT, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS && !blinnKeyPressed)
+	{
+		blinn = !blinn;
+		blinnKeyPressed = true;
+	}
+	if (glfwGetKey(window, GLFW_KEY_B) == GLFW_RELEASE)
+	{
+		blinnKeyPressed = false;
+	}
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
