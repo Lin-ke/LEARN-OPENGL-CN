@@ -434,3 +434,16 @@ in gl_Vertex
 
 具体参阅教程，注意接口块跨shader需要声明变量名不同但是（块名和内容）相同的接口块。
 以及参阅教程中的法线绘制。
+
+## 实例化
+在绘制大量重复实例的时候使用，以避免在代码层面使用for循环来渲染，因为使用drawelements会导致多次cpu-gpu的工作
+比较慢。将glDrawArrays和glDrawElements的渲染调用分别改为glDrawArraysInstanced和glDrawElementsInstanced就可以
+实现1次通信渲染很多实例。
+
+这样渲染同一个实例时cpu提供的数据都是相同的，需要之前就给好uniform数组，并使用gl内建变量gl_InstanceID.
+### 实例化数组
+上文中使用uniform数组的方法不太行，因为这种设计uniform的数量是有限的。它的一个代替方案是实例化数组(Instanced Array)，
+它被定义为一个顶点属性，仅在顶点着色器渲染一个新的实例时才会更新，需要调用
+glVertexAttribDivisor。这个函数告诉了OpenGL该什么时候更新顶点属性的内容至新一组数据
+。它的第一个参数是需要的顶点属性，第二个参数是属性除数(Attribute Divisor)。默认情况下，属性除数是0，告诉OpenGL我们需要在顶点着色器的每次迭代时更新顶点属性。将它设置为1时，我们告诉OpenGL我们希望在渲染一个新实例的时候更新顶点属性。而设置为2时，我们希望每2个实例更新一次属性，以此类推。
+我们将属性除数设置为1，是在告诉OpenGL，处于位置值2的顶点属性是一个实例化数组。
