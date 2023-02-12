@@ -78,9 +78,10 @@ int main()
 	// ------------------------------------
 	// 物体的shader
 	Shader lightingShader("./res/shader/lighting.vs", "./res/shader/lighting.fs");
-	// 灯的shader
-	Shader lightCubeShader("./res/shader/light_cube.vs", "./res/shader/light_cube.fs");
-
+	lightingShader.attach(GL_GEOMETRY_SHADER, "./res/shader/boom.gs");
+	// 法线的shader
+	Shader normalShader("./res/shader/light_cube.vs", "./res/shader/light_cube.fs");
+	normalShader.attach(GL_GEOMETRY_SHADER, "./res/shader/normal.gs");
 	// 模型
 	Model ourModel("./res/model/keli.pmx");
 	
@@ -103,6 +104,7 @@ int main()
 
 		// don't forget to enable shader before setting uniforms
 		lightingShader.use();
+		lightingShader.setFloat("time", glfwGetTime());
 
 		// view/projection transformations
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
@@ -116,8 +118,13 @@ int main()
 		model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
 		lightingShader.setMat4("model", model);
 		ourModel.Draw(lightingShader);
+		normalShader.use();
 
+		normalShader.setMat4("projection", projection);
+		normalShader.setMat4("view", view);
+		normalShader.setMat4("model", model);
 
+		ourModel.Draw(normalShader);
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		// -------------------------------------------------------------------------------
 		glfwSwapBuffers(window);

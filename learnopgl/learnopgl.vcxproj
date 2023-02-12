@@ -310,10 +310,12 @@
     <None Include="dependency\include\glm\gtx\vector_angle.inl" />
     <None Include="dependency\include\glm\gtx\vector_query.inl" />
     <None Include="dependency\include\glm\gtx\wrap.inl" />
+    <None Include="res\shader\boom.gs" />
     <None Include="res\shader\light_cube.fs" />
     <None Include="res\shader\light_cube.vs" />
     <None Include="res\shader\lighting.vs" />
     <None Include="res\shader\lighting.fs" />
+    <None Include="res\shader\normal.gs" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\Downloads\assimp-5.2.5\build\include\assimp\config.h" />

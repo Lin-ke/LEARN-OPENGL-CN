@@ -451,6 +451,8 @@
     <None Include="dependency\include\assimp\vector3.inl">
       <Filter>头文件</Filter>
     </None>
+    <None Include="res\shader\boom.gs" />
+    <None Include="res\shader\normal.gs" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\learnopgl.cpp">

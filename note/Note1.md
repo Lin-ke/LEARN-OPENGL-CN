@@ -398,3 +398,39 @@ std140：不同OpenGL实现不存在布局差异。
 
 uniform block 与 buffer的绑定方式是通过绑定点进行的。![Bindpoint](bindpoint.png),需要glUniformBlockBinding函数，参数是
 (shaderid,idx,绑定点)，idx通过glGetUniformBlockIndex(程序，名称)
+
+## 几何着色器
+几何着色器在顶点着色器之后进入。使用需要遵守一些原则：
+1.在几何着色器的顶部，我们需要声明从顶点着色器输入的图元类型，这需要在in关键字前声明一个布局修饰符(Layout Qualifier)。这个输入布局修饰符可以从顶点着色器接收下列任何一个图元值：
+    
+    points：绘制GL_POINTS图元时（1）。
+    lines：绘制GL_LINES或GL_LINE_STRIP时（2）
+    lines_adjacency：GL_LINES_ADJACENCY或GL_LINE_STRIP_ADJACENCY（4）
+    triangles：GL_TRIANGLES、GL_TRIANGLE_STRIP或GL_TRIANGLE_FAN（3）
+    triangles_adjacency：GL_TRIANGLES_ADJACENCY或GL_TRIANGLE_STRIP_ADJACENCY（6）
+2. 还需要指定几何着色器输出的图元类型，对out 使用layout（）可选：
+    
+    points
+    line_strip
+    triangle_strip
+并可以指定max_vertices = 2以限制最大顶点。
+3. 他的作用是将一个顶点等等画成另外一个图元，比如一个点变成一个小三角。这可以
+用在一些新奇效果上，并且总比输入顶点来得快。
+
+4. 可以使用名字gl_in的内建变量来找到输入的全部顶点，他像是：
+```
+in gl_Vertex
+{
+    vec4  gl_Position;
+    float gl_PointSize;
+    float gl_ClipDistance[];
+} gl_in[];
+```
+5. 使用2个几何着色器函数，EmitVertex和EndPrimitive，来生成新的数据。在计算出内建变量
+6. gl_Position后就EmitVertex这个顶点，并（可以）使用EndPrimitive()合成这些顶点以生成如三角形的图元。
+
+### 爆破效果
+将每个三角形沿着法向量的方向移动一小段时间，效果就是，整个物体看起来像是沿着每个三角形的法线向量爆炸一样
+
+具体参阅教程，注意接口块跨shader需要声明变量名不同但是（块名和内容）相同的接口块。
+以及参阅教程中的法线绘制。

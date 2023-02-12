@@ -30,7 +30,7 @@ public:
 	void setVec3(const std::string &name, float x, float y, float z) const;
 	template <typename T>
 	void set(const std::string &name, T val);
-	
+	void attach(uint32_t type, const char* shaderpath);
 };
 template <typename T>
 void Shader::set(const std::string &name, T val) {
