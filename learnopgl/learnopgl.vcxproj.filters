@@ -423,10 +423,6 @@
     <None Include="dependency\include\glm\gtx\wrap.inl">
       <Filter>头文件</Filter>
     </None>
-    <None Include="res\shader\lighting.fs" />
-    <None Include="res\shader\lighting.vs" />
-    <None Include="res\shader\light_cube.vs" />
-    <None Include="res\shader\light_cube.fs" />
     <None Include="dependency\include\assimp\color4.inl">
       <Filter>头文件</Filter>
     </None>
@@ -450,6 +446,24 @@
     </None>
     <None Include="dependency\include\assimp\vector3.inl">
       <Filter>头文件</Filter>
+    </None>
+    <None Include="res\shader\depthshader.fs">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\shader\depthshader.vs">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\shader\lighting.fs">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\shader\lighting.vs">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\shader\test_depth.fs">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\shader\test_depth.vs">
+      <Filter>资源文件</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

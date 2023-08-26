@@ -78,12 +78,50 @@ int main()
 	glEnable(GL_FRAMEBUFFER_SRGB);
 	// build and compile our shader zprogram
 	// ------------------------------------
-	// 物体的shader
+	// 物体的着色器
 	Shader lightingShader("./res/shader/lighting.vs", "./res/shader/lighting.fs");
+
+	// 测试着色器
+	Shader testdepthShader("./res/shader/test_depth.vs", "./res/shader/test_depth.fs");
+	// 深度贴图着色器
+	Shader deepShader("./res/shader/depthshader.vs", "./res/shader/depthshader.fs");
 	
 	// 模型
 	Model ourModel("./res/model/keli.pmx");
-	
+
+	// 创建帧缓冲
+	const GLuint	 SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+	GLuint depthmap_fbo;
+	glGenBuffers(1, &depthmap_fbo);
+
+	GLuint depthmap_texture;
+	glGenTextures(1, &depthmap_texture);
+	glBindTexture(GL_TEXTURE_2D, depthmap_texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+		SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	// 绑定纹理和帧缓冲
+	glBindFramebuffer(GL_FRAMEBUFFER, depthmap_fbo);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthmap_texture, 0);
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	// 光源
+	GLfloat near_plane = 1.0f, far_plane = 7.5f;
+	// ???
+	glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+	glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 lightSpaceMatrix = lightProjection * lightView;
+
+	// 确定的configure
+	testdepthShader.use();
+	testdepthShader.setInt("depthMap", 0);
+	deepShader.use();
+	deepShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+
 	while (!glfwWindowShouldClose(window))
 	{
 		// 逐帧计算时间
@@ -101,10 +139,12 @@ int main()
 		glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// don't forget to enable shader before setting uniforms
-		lightingShader.use();
 
+
+
+		// 物体
 		// view/projection transformations
+		lightingShader.use();
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 		glm::mat4 view = camera.GetViewMatrix();
 		lightingShader.setMat4("projection", projection);
@@ -112,15 +152,37 @@ int main()
 		lightingShader.setInt("blinn", blinn);
 		lightingShader.setVec3("viewPos", camera.Position);
 		lightingShader.setVec3("lightPos", lightPos);
-		std::cout << glm::to_string(camera.Position)<<std::endl;
 		// render the loaded model
 		glm::mat4 model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
 		model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
 		lightingShader.setMat4("model", model);
-		ourModel.Draw(lightingShader);
-		std::cout << (blinn ? "Blinn-Phong" : "Phong") << std::endl;
 
+
+		// 阴影贴图
+		deepShader.use();
+		deepShader.setMat4("model", model);
+		glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+		glBindFramebuffer(GL_FRAMEBUFFER, depthmap_fbo);
+		glClear(GL_DEPTH_BUFFER_BIT);
+		ourModel.Draw(deepShader);
+	
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		// 重置viewport
+		glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+		// 测试阴影
+		testdepthShader.use();
+		testdepthShader.setFloat("near_plane", near_plane);
+		testdepthShader.setFloat("far_plane", far_plane);
+		testdepthShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+		testdepthShader.setMat4("model", model);
+		ourModel.Draw(testdepthShader);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, depthmap_texture);
+		ourModel.Draw(testdepthShader);
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		// -------------------------------------------------------------------------------
 		glfwSwapBuffers(window);

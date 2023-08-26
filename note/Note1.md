@@ -514,3 +514,15 @@ float gamma = 2.2;
 ### 衰减
 在开启gamma矫正后，我们进行的都是依据在物理世界进行，实际上光是二次衰减的，也因此使用二次衰减效果更好。
 但不开启gamma矫正时使用1/x效果更好，这是因为gamma矫正后成为1/x^2.2，比较贴合现实。
+
+# 阴影
+## 阴影映射
+阴影映射由两个步骤组成：首先，我们渲染深度贴图，然后我们像往常一样渲染场景，使用生成的深度贴图来计算片段是否在阴影之中。
+
+深度贴图：从光的透视图里渲染的深度纹理，使用帧缓冲的深度缓冲区。需要的只是在从光的透视图下渲染场景的时候深度信息，所以颜色缓冲没有用。然而，不包含颜色缓冲的帧缓冲对象是不完整的，所以我们需要显式告诉OpenGL我们不适用任何颜色数据进行渲染。通过将调用glDrawBuffer和glReadBuffer把读和绘制缓冲设置为GL_NONE来做这件事
+
+glDrawBuffer:
+![](2023-08-26-21-20-43.png)
+
+glBindFramebuffer:
+ 将名称为framebuffer 的帧缓冲区对象绑定到由target 指定的帧缓冲区目标。目标必须是 GL_DRAW_FRAMEBUFFER、GL_READ_FRAMEBUFFER 或 GL_FRAMEBUFFER。如果帧缓冲区对象绑定到 GL_DRAW_FRAMEBUFFER 或 GL_READ_FRAMEBUFFER，则它分别成为渲染或读回操作的目标，直到它被删除或另一个帧缓冲区绑定到相应的绑定点。调用 glBindFramebuffer 将目标设置为 GL_FRAMEBUFFER 将帧缓冲区绑定到读取和绘制帧缓冲区目标。 Framebuffer 是先前从调用 glGenFramebuffers 返回的帧缓冲区对象的名称，或者为零以破坏帧缓冲区对象与目标的现有绑定
