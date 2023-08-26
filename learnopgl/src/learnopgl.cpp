@@ -119,9 +119,9 @@ int main()
 	// 确定的configure
 	testdepthShader.use();
 	testdepthShader.setInt("depthMap", 0);
+
 	deepShader.use();
 	deepShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
-
 	while (!glfwWindowShouldClose(window))
 	{
 		// 逐帧计算时间
@@ -136,7 +136,7 @@ int main()
 
 		// render
 		// ------
-		glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
@@ -179,7 +179,6 @@ int main()
 		testdepthShader.setFloat("far_plane", far_plane);
 		testdepthShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
 		testdepthShader.setMat4("model", model);
-		ourModel.Draw(testdepthShader);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, depthmap_texture);
 		ourModel.Draw(testdepthShader);
