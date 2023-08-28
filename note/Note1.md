@@ -525,4 +525,21 @@ glDrawBuffer:
 ![](2023-08-26-21-20-43.png)
 
 glBindFramebuffer:
- 将名称为framebuffer 的帧缓冲区对象绑定到由target 指定的帧缓冲区目标。目标必须是 GL_DRAW_FRAMEBUFFER、GL_READ_FRAMEBUFFER 或 GL_FRAMEBUFFER。如果帧缓冲区对象绑定到 GL_DRAW_FRAMEBUFFER 或 GL_READ_FRAMEBUFFER，则它分别成为渲染或读回操作的目标，直到它被删除或另一个帧缓冲区绑定到相应的绑定点。调用 glBindFramebuffer 将目标设置为 GL_FRAMEBUFFER 将帧缓冲区绑定到读取和绘制帧缓冲区目标。 Framebuffer 是先前从调用 glGenFramebuffers 返回的帧缓冲区对象的名称，或者为零以破坏帧缓冲区对象与目标的现有绑定
+将名称为framebuffer 的帧缓冲区对象绑定到由target 指定的帧缓冲区目标。目标必须是 GL_DRAW_FRAMEBUFFER、GL_READ_FRAMEBUFFER 或 GL_FRAMEBUFFER。如果帧缓冲区对象绑定到 GL_DRAW_FRAMEBUFFER 或 GL_READ_FRAMEBUFFER，则它分别成为渲染或读回操作的目标，直到它被删除或另一个帧缓冲区绑定到相应的绑定点。调用 glBindFramebuffer 将目标设置为 GL_FRAMEBUFFER 将帧缓冲区绑定到读取和绘制帧缓冲区目标。 Framebuffer 是先前从调用 glGenFramebuffers 返回的帧缓冲区对象的名称，或者为零以破坏帧缓冲区对象与目标的现有绑定。
+## 阴影失真：线条
+![](2023-08-27-18-29-00.png)
+因为阴影贴图受限于分辨率，在距离光源比较远的情况下，多个片段可能从深度贴图的同一个值中去采样。我们可以用一个叫做阴影偏移（shadow bias）的技巧来解决这个问题. 也就是认为表面的深度值要略小一个bias(current - bias > depth == shadow). bias可以通过法线与光照的关系指定，比如
+
+float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
+
+![](2023-08-28-22-23-11.png)
+## 阴影失真：悬浮
+偏移有可能足够大，以至于可以看出阴影相对实际物体位置的偏移。我们可以使用一个叫技巧解决大部分的Peter panning问题：当渲染深度贴图时候使用正面剔除（front face culling）。
+
+![](2023-08-28-22-29-59.png)
+
+## 采样过多
+深度贴图是光的视锥范围，在此之外，深度值大于1，纹理默认设置repeat，就又重新采样一次。使用GL_CLAMP_TO_BORDER并设置为1.0可以使他不会处于阴影当中。
+
+## PCF（percentage-closer filtering）
+这是一种多个不同过滤方式的组合，它产生柔和阴影，使它们出现更少的锯齿块和硬边。核心思想是从深度贴图中多次采样，每一次采样的纹理坐标都稍有不同。每个独立的样本可能在也可能不再阴影中。所有的次生结果接着结合在一起，进行平均化，我们就得到了柔和阴影。

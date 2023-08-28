@@ -465,6 +465,18 @@
     <None Include="res\shader\test_depth.vs">
       <Filter>资源文件</Filter>
     </None>
+    <None Include="res\shader\s.fs">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\shader\s.vs">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\shader\light_cube.fs">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\shader\light_cube.vs">
+      <Filter>资源文件</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\learnopgl.cpp">
@@ -486,6 +498,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\model.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="源.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
