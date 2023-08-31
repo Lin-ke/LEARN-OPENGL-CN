@@ -7,12 +7,12 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <filesystem>
+#include "error.h"
+
 #include "shader.h"
 #include "camera.h"
 #include "stb_image.h"
-#include "error.h"
 #include "model.h"
-#include <iostream>
 // 回调函数
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -101,7 +101,7 @@ int main()
 	GLCall(glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float))));
 	GLCall(glBindVertexArray(0));
 
-	unsigned int woodTexture = loadTexture("res/pic/awesomeface.png");
+	unsigned int woodTexture = loadTexture("res/pic/wood.png");
 	// 光源
 	
 	float lightV[] = {
@@ -170,12 +170,12 @@ int main()
 	// build and compile our shader zprogram
 	// ------------------------------------
 	// 物体的着色器
-	Shader lightingShader("./res/shader/s.vs", "./res/shader/s.fs");
+	Shader lightingShader("./res/shader/lighting.vs", "./res/shader/lighting.fs");
 
 	// 测试着色器
 	Shader testdepthShader("./res/shader/test_depth.vs", "./res/shader/test_depth.fs");
 	// 深度贴图着色器
-	Shader deepShader("./res/shader/depthshader.vs", "./res/shader/depthshader.fs");
+	Shader depthShader("./res/shader/depthshader.vs","./res/shader/depthshader.gs", "./res/shader/depthshader.fs");
 	// 灯着色器
 	Shader lampShader("./res/shader/light_cube.vs", "./res/shader/light_cube.fs");
 
@@ -188,35 +188,52 @@ int main()
 	GLCall(glGenFramebuffers(1, &depthmap_fbo));
 	GLCall(glBindFramebuffer(GL_FRAMEBUFFER, depthmap_fbo));
 
-	GLuint depthmap_texture;
-	GLCall(glGenTextures(1, &depthmap_texture));
-	GLCall(glBindTexture(GL_TEXTURE_2D, depthmap_texture));
-	GLCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
-		SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL));
-	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
-	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	GLuint depthCubemap;
+	glGenTextures(1, &depthCubemap);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
+	for (GLuint i = 0; i < 6; ++i)
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT,
+			SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 	GLfloat borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
-	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-	// 绑定纹理和帧缓冲
-	GLCall(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthmap_texture, 0));
-	GLCall(glDrawBuffer(GL_NONE));
-	GLCall(glReadBuffer(GL_NONE));
-	GLCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+	glTexParameterfv(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BORDER_COLOR, borderColor);
+	glBindFramebuffer(GL_FRAMEBUFFER, depthmap_fbo);
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthCubemap, 0);
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		std::cout << "Framebuffer not complete!" << std::endl;
+		return 0;
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 	// 光源
-	GLfloat near_plane = 1.0f, far_plane = 7.5f;
+	GLfloat near_plane = 1.0f, far_plane = 25.f;
 	// ???
-	glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
 	glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	glm::mat4 lightSpaceMatrix = lightProjection * lightView;
-
+	float aspect = SHADOW_WIDTH / (GLfloat)SHADOW_HEIGHT;
+	glm::mat4 lightProjection = glm::perspective(glm::radians(90.0f),aspect , near_plane, far_plane);
+	std::vector<glm::mat4> shadowTransforms;
+	shadowTransforms.push_back(lightProjection*
+		glm::lookAt(lightPos, lightPos + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
+	shadowTransforms.push_back(lightProjection*
+		glm::lookAt(lightPos, lightPos + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0)));
+	shadowTransforms.push_back(lightProjection*
+		glm::lookAt(lightPos, lightPos + glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0)));
+	shadowTransforms.push_back(lightProjection*
+		glm::lookAt(lightPos, lightPos + glm::vec3(0.0, -1.0, 0.0), glm::vec3(0.0, 0.0, -1.0)));
+	shadowTransforms.push_back(lightProjection*
+		glm::lookAt(lightPos, lightPos + glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, -1.0, 0.0)));
+	shadowTransforms.push_back(lightProjection*
+		glm::lookAt(lightPos, lightPos + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0)));
 	// 确定的configure
-	testdepthShader.use();
-	testdepthShader.setInt("depthMap", 0);
 
-	lightingShader.use();
-	lightingShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
 	while (!glfwWindowShouldClose(window))
 	{
 		// 逐帧计算时间
@@ -233,7 +250,7 @@ int main()
 		// ------
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		std::cout << camera.Position.x << "," << camera.Position.y << "," << camera.Position.z << std::endl;
+		//std::cout << camera.Position.x << "," << camera.Position.y << "," << camera.Position.z << std::endl;
 
 
 
@@ -242,29 +259,38 @@ int main()
 
 
 		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // translate it down so it's at the center of the scene
+		model = glm::translate(model, glm::vec3(0.0f, -.5f, 0.0f)); // translate it down so it's at the center of the scene
 		model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
 
+		testdepthShader.use();
+		testdepthShader.setInt("depthMap", 0);
+		depthShader.use();
+		for (int i = 0; i < 6; ++i) {
+			GLCall(depthShader.setMat4(("shadowMatrices[" + std::to_string(i) + "]"), shadowTransforms[i]));
+
+
+		}
+		GLCall(depthShader.setVec3("lightPos", lightPos));
+		depthShader.setFloat("far_plane", far_plane);
+
+		
 
 		// 阴影贴图
-		deepShader.use();
+		depthShader.use();
 		GLCall(glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT));
 		GLCall(glBindFramebuffer(GL_FRAMEBUFFER, depthmap_fbo));
 		GLCall(glClear(GL_DEPTH_BUFFER_BIT));
 		GLCall(glActiveTexture(GL_TEXTURE0));
 		GLCall(glBindTexture(GL_TEXTURE_2D, woodTexture));
-		glCullFace(GL_FRONT);
-		
-		drawFloor(deepShader,planeVAO);
-		deepShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
-		deepShader.setMat4("model", model);
-		ourModel.Draw(deepShader);
-		glCullFace(GL_BACK);
+		// glCullFace(GL_FRONT);
+		drawFloor(depthShader,planeVAO);
+		depthShader.setMat4("model", model);
+		ourModel.Draw(depthShader);
+		// glCullFace(GL_BACK);
 		GLCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 		// 重置viewport
 		GLCall(glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT));
 		GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-
 		// 检验
 
 		// 渲染模型
@@ -274,14 +300,16 @@ int main()
 		lightingShader.setMat4("projection", projection);
 		lightingShader.setMat4("view", view);
 		lightingShader.setMat4("model", model);
-			
-		
-		lightingShader.setInt("shadowMap", 1);
+		lightingShader.setFloat("far_plane", far_plane);
+		lightingShader.setVec3("viewPos", camera.Position);
+		lightingShader.setVec3("lightPos", lightPos);
+
+		lightingShader.setInt("depthMap", 1);
 		lightingShader.setInt("diffuseTexture", 0);
 		GLCall(glActiveTexture(GL_TEXTURE0));
 		GLCall(glBindTexture(GL_TEXTURE_2D, woodTexture));
 		GLCall(glActiveTexture(GL_TEXTURE1));
-		GLCall(glBindTexture(GL_TEXTURE_2D, depthmap_texture));
+		GLCall(glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap));
 		drawFloor(lightingShader, planeVAO);
 		lightingShader.setMat4("model", model);
 		ourModel.Draw(lightingShader);
@@ -298,15 +326,13 @@ int main()
 
 
 		//// 测试阴影
-		testdepthShader.use();
-		testdepthShader.setFloat("near_plane", near_plane);
-		testdepthShader.setFloat("far_plane", far_plane);
-		testdepthShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
-		model = glm::translate(glm::mat4(1.0f), picPos);
-		testdepthShader.setMat4("model", model);
-		GLCall(glActiveTexture(GL_TEXTURE0));
-		GLCall(glBindTexture(GL_TEXTURE_2D, depthmap_texture));
-		testdepthShader.setInt("depthMap", 0);
+		//testdepthShader.use();
+		//testdepthShader.setFloat("near_plane", near_plane);
+		//testdepthShader.setFloat("far_plane", far_plane);
+		//model = glm::translate(glm::mat4(1.0f), picPos);
+		//testdepthShader.setMat4("model", model);
+		//GLCall(glActiveTexture(GL_TEXTURE0));
+		//testdepthShader.setInt("depthMap", 0);
 		//renderQuad();
 		
 		//glActiveTexture(GL_TEXTURE0);

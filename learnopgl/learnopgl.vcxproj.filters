@@ -477,6 +477,9 @@
     <None Include="res\shader\light_cube.vs">
       <Filter>资源文件</Filter>
     </None>
+    <None Include="res\shader\depthshader.gs">
+      <Filter>资源文件</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\learnopgl.cpp">
@@ -500,7 +503,7 @@
     <ClCompile Include="src\model.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="源.cpp">
+    <ClCompile Include="src\error.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1620,6 +1623,9 @@
     </ClInclude>
     <ClInclude Include="dependency\include\assimp\config.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\error.h">
+      <Filter>源文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

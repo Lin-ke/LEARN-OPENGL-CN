@@ -3,7 +3,6 @@
 #define SHADER_H
 
 #include <glad/glad.h>
-
 #include <string>
 #include <fstream>
 #include <sstream>
@@ -11,6 +10,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <typeinfo>
+#include "error.h"
+
 class Shader
 {
 public:
@@ -19,6 +20,8 @@ public:
 
 	// 构造器读取并构建着色器
 	Shader(const char* vertexPath, const char* fragmentPath);
+	Shader(const char* vertexPath, const char* geometryPath,const char* fragmentPath);
+
 	// 使用/激活程序
 	void use();
 	// uniform工具函数

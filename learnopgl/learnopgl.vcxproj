@@ -158,13 +158,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="dependency\include\glm\detail\glm.cpp" />
+    <ClCompile Include="src\error.cpp" />
     <ClCompile Include="src\glad.c" />
     <ClCompile Include="src\learnopgl.cpp" />
     <ClCompile Include="src\mesh.cpp" />
     <ClCompile Include="src\model.cpp" />
     <ClCompile Include="src\stb_image.cpp" />
     <ClCompile Include="src\shader.cpp" />
-    <ClCompile Include="源.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dependency\include\assimp\color4.inl" />
@@ -312,6 +312,7 @@
     <None Include="dependency\include\glm\gtx\vector_query.inl" />
     <None Include="dependency\include\glm\gtx\wrap.inl" />
     <None Include="res\shader\depthshader.fs" />
+    <None Include="res\shader\depthshader.gs" />
     <None Include="res\shader\depthshader.vs" />
     <None Include="res\shader\lighting.fs" />
     <None Include="res\shader\lighting.vs" />
@@ -689,6 +690,7 @@
     <ClInclude Include="dependency\include\glm\vec4.hpp" />
     <ClInclude Include="dependency\include\glm\vector_relational.hpp" />
     <ClInclude Include="src\camera.h" />
+    <ClInclude Include="src\error.h" />
     <ClInclude Include="src\mesh.h" />
     <ClInclude Include="src\model.h" />
     <ClInclude Include="src\shader.h" />
