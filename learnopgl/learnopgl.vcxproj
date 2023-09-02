@@ -314,6 +314,8 @@
     <None Include="res\shader\depthshader.fs" />
     <None Include="res\shader\depthshader.gs" />
     <None Include="res\shader\depthshader.vs" />
+    <None Include="res\shader\hdr.fs" />
+    <None Include="res\shader\hdr.vs" />
     <None Include="res\shader\lighting.fs" />
     <None Include="res\shader\lighting.vs" />
     <None Include="res\shader\light_cube.fs" />

@@ -40,6 +40,7 @@ float lastFrame = 0.0f;
 
 // lighting
 glm::vec3 lightPos(0.59f, 9.32f, 9.f);
+glm::vec3 lightColor(.1f, .1f, .1f);
 glm::vec3 picPos(0.59f, 9.32f, 13.f);
 
 
@@ -178,6 +179,8 @@ int main()
 	Shader depthShader("./res/shader/depthshader.vs","./res/shader/depthshader.gs", "./res/shader/depthshader.fs");
 	// 灯着色器
 	Shader lampShader("./res/shader/light_cube.vs", "./res/shader/light_cube.fs");
+	// HDR -> 普通
+	Shader hdrShader("./res/shader/hdr.vs", "./res/shader/hdr.fs");
 
 	// 模型
 	Model ourModel("./res/model/keli.pmx");
@@ -213,6 +216,34 @@ int main()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+	// HDR帧缓冲，具有色彩缓冲和帧缓冲两个附件
+	GLuint hdrFBO;
+	glGenFramebuffers(1, &hdrFBO);
+	// - Create floating point color buffer
+	GLuint colorBuffer;
+	glGenTextures(1, &colorBuffer);
+	glBindTexture(GL_TEXTURE_2D, colorBuffer);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	// - Create depth buffer (renderbuffer)
+	GLuint rboDepth;
+	glGenRenderbuffers(1, &rboDepth);
+	glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, SCR_WIDTH, SCR_HEIGHT);
+	// - Attach buffers
+	glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorBuffer, 0);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "Framebuffer not complete!" << std::endl;
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+
+
+
 	// 光源
 	GLfloat near_plane = 1.0f, far_plane = 25.f;
 	// ???
@@ -288,11 +319,14 @@ int main()
 		ourModel.Draw(depthShader);
 		// glCullFace(GL_BACK);
 		GLCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+
+
+		// HDR 的 framebuffer
+		glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		// 重置viewport
 		GLCall(glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT));
 		GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-		// 检验
-
 		// 渲染模型
 		lightingShader.use();
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
@@ -303,6 +337,8 @@ int main()
 		lightingShader.setFloat("far_plane", far_plane);
 		lightingShader.setVec3("viewPos", camera.Position);
 		lightingShader.setVec3("lightPos", lightPos);
+		lightingShader.setVec3("lightColor", lightColor);
+
 
 		lightingShader.setInt("depthMap", 1);
 		lightingShader.setInt("diffuseTexture", 0);
@@ -323,23 +359,19 @@ int main()
 		lampShader.setMat4("model", model);
 		drawLight(lampShader, lightCubeVAO);
 		
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+		// 使用HDR
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		hdrShader.use();
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, colorBuffer);
 
-		//// 测试阴影
-		//testdepthShader.use();
-		//testdepthShader.setFloat("near_plane", near_plane);
-		//testdepthShader.setFloat("far_plane", far_plane);
-		//model = glm::translate(glm::mat4(1.0f), picPos);
-		//testdepthShader.setMat4("model", model);
-		//GLCall(glActiveTexture(GL_TEXTURE0));
-		//testdepthShader.setInt("depthMap", 0);
-		//renderQuad();
-		
-		//glActiveTexture(GL_TEXTURE0);
-		//glBindTexture(GL_TEXTURE_2D, depthmap_texture);
-		//ourModel.Draw(testdepthShader);
-		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-		// -------------------------------------------------------------------------------
+		hdrShader.setBool("hdr", true);
+		hdrShader.setFloat("exposure", 5.0f);
+		hdrShader.setInt("hdrBuffer", (int) 0);
+		renderQuad();
+
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}

@@ -480,6 +480,12 @@
     <None Include="res\shader\depthshader.gs">
       <Filter>资源文件</Filter>
     </None>
+    <None Include="res\shader\hdr.fs">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\shader\hdr.vs">
+      <Filter>资源文件</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\learnopgl.cpp">

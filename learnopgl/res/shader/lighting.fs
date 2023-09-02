@@ -11,6 +11,8 @@ uniform sampler2D diffuseTexture;
 uniform samplerCube depthMap;
 
 uniform vec3 lightPos;
+uniform vec3 lightColor;
+
 uniform vec3 viewPos;
 
 uniform float far_plane;
@@ -63,26 +65,36 @@ float ShowShadow(vec3 fragPos)
 
 void main()
 {           
+    float gamma = 2.2;
     vec3 color = texture(diffuseTexture, fs_in.TexCoords).rgb;
+    vec3 mapped = color / (color + vec3(1.0));
+    mapped = pow(mapped, vec3(1.0 / gamma));
     vec3 normal = normalize(fs_in.Normal);
-    vec3 lightColor = vec3(0.3);
     // Ambient
-    vec3 ambient = 0.3 * color;
+    vec3 ambient = 0.0 * color;
     // Diffuse
     vec3 lightDir = normalize(lightPos - fs_in.FragPos);
     float diff = max(dot(lightDir, normal), 0.0);
-    vec3 diffuse = diff * lightColor;
+    vec3 diffuse = color *diff * lightColor;
     // Specular
     vec3 viewDir = normalize(viewPos - fs_in.FragPos);
     vec3 reflectDir = reflect(-lightDir, normal);
     float spec = 0.0;
     vec3 halfwayDir = normalize(lightDir + viewDir);  
     spec = pow(max(dot(normal, halfwayDir), 0.0), 64.0);
-    vec3 specular = spec * lightColor;    
+    vec3 specular = 0.0 * lightColor;    
+    vec3 result = diffuse + specular;
+
+     float distance = length(fs_in.FragPos - lightPos);
+     result *= 1.0 / (distance * distance);
+
     // Calculate shadow
     float shadow = ShadowCalculation(fs_in.FragPos);                      
-    vec3 lighting = (ambient + (1.0 - shadow) * (diffuse + specular)) * color;    
-    float closestDepth = ShowShadow(fs_in.FragPos);
+    vec3 lighting = (ambient + (1.0 - shadow) * result);    
     FragColor = vec4(min(lighting , 1.0), 1.0);
+    
+    
+    float closestDepth = ShowShadow(fs_in.FragPos);
+
     // FragColor = vec4(vec3(closestDepth / far_plane), 1.0);
 }
