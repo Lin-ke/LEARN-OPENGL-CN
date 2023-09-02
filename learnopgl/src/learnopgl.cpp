@@ -218,7 +218,6 @@ int main()
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 	// HDR帧缓冲，具有2*色彩缓冲和深度缓冲3个附件
 	GLuint hdrFBO;
 	glGenFramebuffers(1, &hdrFBO);
@@ -241,11 +240,6 @@ int main()
 		);
 	}
 
-	// - Create depth buffer (renderbuffer)
-	GLuint rboDepth;
-	glGenRenderbuffers(1, &rboDepth);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, SCR_WIDTH, SCR_HEIGHT);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
 	// 告知opengl需要渲染两个附件
 
 	unsigned int attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
@@ -316,7 +310,7 @@ int main()
 		//std::cout << camera.Position.x << "," << camera.Position.y << "," << camera.Position.z << std::endl;
 
 
-
+		GLCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 		// 物体
 		// view/projection transformations
 		glm::mat4 model = glm::mat4(1.0f);
@@ -326,8 +320,6 @@ int main()
 		depthShader.use();
 		for (int i = 0; i < 6; ++i) {
 			GLCall(depthShader.setMat4(("shadowMatrices[" + std::to_string(i) + "]"), shadowTransforms[i]));
-
-
 		}
 		GLCall(depthShader.setVec3("lightPos", lightPos));
 		depthShader.setFloat("far_plane", far_plane);
@@ -342,13 +334,13 @@ int main()
 		ourModel.Draw(depthShader);
 		// glCullFace(GL_BACK);
 		GLCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
-
-
-		// HDR 的 framebuffer
-		glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
 		// 重置viewport
 		GLCall(glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT));
 		GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+
+		// HDR 的 framebuffer
+		glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
+
 
 		// 渲染模型
 		lightingShader.use();
