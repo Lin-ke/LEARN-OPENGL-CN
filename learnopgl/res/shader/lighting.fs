@@ -83,7 +83,7 @@ void main()
     vec3 halfwayDir = normalize(lightDir + viewDir);  
     spec = pow(max(dot(normal, halfwayDir), 0.0), 64.0);
     vec3 specular = 0.0 * lightColor;    
-    vec3 result = diffuse + specular;
+    vec3 result = diffuse ;
 
      float distance = length(fs_in.FragPos - lightPos);
      result *= 1.0 / (distance * distance);
@@ -98,5 +98,5 @@ void main()
     
     float closestDepth = ShowShadow(fs_in.FragPos);
 
-    // FragColor = vec4(vec3(closestDepth / far_plane), 1.0);
+    //FragColor = vec4(vec3(closestDepth / far_plane), 1.0);
 }

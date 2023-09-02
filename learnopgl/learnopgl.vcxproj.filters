@@ -465,10 +465,10 @@
     <None Include="res\shader\test_depth.vs">
       <Filter>资源文件</Filter>
     </None>
-    <None Include="res\shader\s.fs">
+    <None Include="res\shader\blur.fs">
       <Filter>资源文件</Filter>
     </None>
-    <None Include="res\shader\s.vs">
+    <None Include="res\shader\blur.vs">
       <Filter>资源文件</Filter>
     </None>
     <None Include="res\shader\light_cube.fs">
