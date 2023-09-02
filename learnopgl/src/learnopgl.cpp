@@ -40,7 +40,7 @@ float lastFrame = 0.0f;
 
 // lighting
 glm::vec3 lightPos(0.59f, 9.32f, 9.f);
-glm::vec3 lightColor(.1f, .1f, .1f);
+glm::vec3 lightColor(20.f, 20.f, 20.f);
 glm::vec3 picPos(0.59f, 9.32f, 13.f);
 
 
@@ -216,26 +216,33 @@ int main()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-	// HDR帧缓冲，具有色彩缓冲和帧缓冲两个附件
+	// HDR帧缓冲，具有2*色彩缓冲和深度缓冲3个附件
 	GLuint hdrFBO;
 	glGenFramebuffers(1, &hdrFBO);
-	// - Create floating point color buffer
-	GLuint colorBuffer;
-	glGenTextures(1, &colorBuffer);
-	glBindTexture(GL_TEXTURE_2D, colorBuffer);
-
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
+	GLuint colorBuffers[2];
+	glGenTextures(2, colorBuffers);
+	for (GLuint i = 0; i < 2; i++)
+	{
+		glBindTexture(GL_TEXTURE_2D, colorBuffers[i]);
+		glTexImage2D(
+			GL_TEXTURE_2D, 0, GL_RGB16F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_FLOAT, NULL
+		);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		// attach texture to framebuffer
+		glFramebufferTexture2D(
+			GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, colorBuffers[i], 0
+		);
+	}
 	// - Create depth buffer (renderbuffer)
 	GLuint rboDepth;
 	glGenRenderbuffers(1, &rboDepth);
 	glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, SCR_WIDTH, SCR_HEIGHT);
-	// - Attach buffers
-	glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorBuffer, 0);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
+	
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		std::cout << "Framebuffer not complete!" << std::endl;
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -327,6 +334,9 @@ int main()
 		// 重置viewport
 		GLCall(glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT));
 		GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+		// 告知opengl需要渲染两个附件
+		GLuint attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+		glDrawBuffers(2, attachments);
 		// 渲染模型
 		lightingShader.use();
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
@@ -365,7 +375,7 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		hdrShader.use();
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, colorBuffer);
+		glBindTexture(GL_TEXTURE_2D, colorBuffers[0]);
 
 		hdrShader.setBool("hdr", true);
 		hdrShader.setFloat("exposure", 5.0f);

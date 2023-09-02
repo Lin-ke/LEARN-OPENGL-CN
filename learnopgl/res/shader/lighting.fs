@@ -1,5 +1,7 @@
 #version 330 core
-out vec4 FragColor;
+layout (location = 0) out vec4 FragColor;
+layout (location = 1) out vec4 BrightColor;
+
 
 in VS_OUT {
     vec3 FragPos;
@@ -65,10 +67,8 @@ float ShowShadow(vec3 fragPos)
 
 void main()
 {           
-    float gamma = 2.2;
     vec3 color = texture(diffuseTexture, fs_in.TexCoords).rgb;
-    vec3 mapped = color / (color + vec3(1.0));
-    mapped = pow(mapped, vec3(1.0 / gamma));
+
     vec3 normal = normalize(fs_in.Normal);
     // Ambient
     vec3 ambient = 0.0 * color;
@@ -91,8 +91,10 @@ void main()
     // Calculate shadow
     float shadow = ShadowCalculation(fs_in.FragPos);                      
     vec3 lighting = (ambient + (1.0 - shadow) * result);    
-    FragColor = vec4(min(lighting , 1.0), 1.0);
-    
+    FragColor = vec4(lighting, 1.0);
+    float brightness = dot(FragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+    if(brightness > 1.0)
+        BrightColor = vec4(FragColor.rgb, 1.0);
     
     float closestDepth = ShowShadow(fs_in.FragPos);
 
