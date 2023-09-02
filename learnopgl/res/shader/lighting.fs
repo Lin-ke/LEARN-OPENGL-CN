@@ -67,8 +67,6 @@ void main()
 {           
     float gamma = 2.2;
     vec3 color = texture(diffuseTexture, fs_in.TexCoords).rgb;
-    vec3 mapped = color / (color + vec3(1.0));
-    mapped = pow(mapped, vec3(1.0 / gamma));
     vec3 normal = normalize(fs_in.Normal);
     // Ambient
     vec3 ambient = 0.0 * color;
@@ -84,14 +82,14 @@ void main()
     spec = pow(max(dot(normal, halfwayDir), 0.0), 64.0);
     vec3 specular = 0.0 * lightColor;    
     vec3 result = diffuse + specular;
-
+    // attenuation
      float distance = length(fs_in.FragPos - lightPos);
      result *= 1.0 / (distance * distance);
 
     // Calculate shadow
     float shadow = ShadowCalculation(fs_in.FragPos);                      
     vec3 lighting = (ambient + (1.0 - shadow) * result);    
-    FragColor = vec4(min(lighting , 1.0), 1.0);
+    FragColor = vec4(lighting, 1.0);
     
     
     float closestDepth = ShowShadow(fs_in.FragPos);

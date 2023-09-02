@@ -40,7 +40,7 @@ float lastFrame = 0.0f;
 
 // lighting
 glm::vec3 lightPos(0.59f, 9.32f, 9.f);
-glm::vec3 lightColor(.1f, .1f, .1f);
+glm::vec3 lightColor(100.f, 100.f, 100.f);
 glm::vec3 picPos(0.59f, 9.32f, 13.f);
 
 
@@ -368,7 +368,7 @@ int main()
 		glBindTexture(GL_TEXTURE_2D, colorBuffer);
 
 		hdrShader.setBool("hdr", true);
-		hdrShader.setFloat("exposure", 5.0f);
+		hdrShader.setFloat("exposure", 1.0f);
 		hdrShader.setInt("hdrBuffer", (int) 0);
 		renderQuad();
 
