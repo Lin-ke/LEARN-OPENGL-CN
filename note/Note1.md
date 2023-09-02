@@ -645,6 +645,13 @@ HDR(High Dynamic Range, 高动态范围)。HDR渲染和其很相似，我们允�
 
 想要创建一个浮点帧缓冲，我们只需要改变颜色缓冲的内部格式参数就行了.
 ## 色调映射
-色调映射(Tone Mapping)是一个损失很小的转换浮点颜色值至我们所需的LDR[0.0, 1.0]范围内的过程，通常会伴有特定的风格的色平衡(Stylistic Color Balance)。
+色调映射(Tone Mapping)是一个损失很小的转换浮点颜色值至我们所需的LDR[0.0, 1.0]范围内的过程，通常会伴有特定的风格的色平衡(Stylistic Color Balance)。比如最简单的
+
+// **Reinhard色调映射**
+    vec3 mapped = hdrColor / (hdrColor + vec3(1.0));
+这个算法是倾向明亮的区域。
+
 ![](2023-09-02-19-39-48.png)
 这个图片清晰地展示了HDR渲染的优点。通过改变曝光等级，我们可以看见场景的很多细节
+
+
