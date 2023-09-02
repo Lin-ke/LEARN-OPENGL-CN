@@ -453,22 +453,10 @@
     <None Include="res\shader\depthshader.vs">
       <Filter>资源文件</Filter>
     </None>
-    <None Include="res\shader\lighting.fs">
+    <None Include="res\shader\test_norm.fs">
       <Filter>资源文件</Filter>
     </None>
-    <None Include="res\shader\lighting.vs">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="res\shader\test_depth.fs">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="res\shader\test_depth.vs">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="res\shader\s.fs">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="res\shader\s.vs">
+    <None Include="res\shader\test_norm.vs">
       <Filter>资源文件</Filter>
     </None>
     <None Include="res\shader\light_cube.fs">
@@ -478,6 +466,12 @@
       <Filter>资源文件</Filter>
     </None>
     <None Include="res\shader\depthshader.gs">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\shader\view.fs">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\shader\view.vs">
       <Filter>资源文件</Filter>
     </None>
   </ItemGroup>

@@ -173,7 +173,7 @@ int main()
 	Shader lightingShader("./res/shader/lighting.vs", "./res/shader/lighting.fs");
 
 	// 测试着色器
-	Shader testdepthShader("./res/shader/test_depth.vs", "./res/shader/test_depth.fs");
+	Shader testdepthShader("./res/shader/test_norm.vs", "./res/shader/test_norm.fs");
 	// 深度贴图着色器
 	Shader depthShader("./res/shader/depthshader.vs","./res/shader/depthshader.gs", "./res/shader/depthshader.fs");
 	// 灯着色器
@@ -297,7 +297,7 @@ int main()
 		lightingShader.use();
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 		glm::mat4 view = camera.GetViewMatrix();
-		lightingShader.setMat4("projection", projection);
+		/*lightingShader.setMat4("projection", projection);
 		lightingShader.setMat4("view", view);
 		lightingShader.setMat4("model", model);
 		lightingShader.setFloat("far_plane", far_plane);
@@ -312,29 +312,27 @@ int main()
 		GLCall(glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap));
 		drawFloor(lightingShader, planeVAO);
 		lightingShader.setMat4("model", model);
-		ourModel.Draw(lightingShader);
+		ourModel.Draw(lightingShader);*/
 
 
 		// 渲染灯
-		lampShader.use();
-		lampShader.setMat4("projection", projection);
-		lampShader.setMat4("view", view);
-		model = glm::translate(glm::mat4(1.0f), lightPos);
-		lampShader.setMat4("model", model);
-		drawLight(lampShader, lightCubeVAO);
+		//lampShader.use();
+		//lampShader.setMat4("projection", projection);
+		//lampShader.setMat4("view", view);
+		//model = glm::translate(glm::mat4(1.0f), lightPos);
+		//lampShader.setMat4("model", model);
+		//drawLight(lampShader, lightCubeVAO);
 		
 
 
-		//// 测试阴影
-		//testdepthShader.use();
-		//testdepthShader.setFloat("near_plane", near_plane);
-		//testdepthShader.setFloat("far_plane", far_plane);
-		//model = glm::translate(glm::mat4(1.0f), picPos);
-		//testdepthShader.setMat4("model", model);
-		//GLCall(glActiveTexture(GL_TEXTURE0));
-		//testdepthShader.setInt("depthMap", 0);
-		//renderQuad();
-		
+		// 测试阴影
+		testdepthShader.use();
+		testdepthShader.setMat4("model", model);
+		testdepthShader.setMat4("projection", projection);
+		testdepthShader.setMat4("view", view);
+		ourModel.Draw(testdepthShader);
+
+
 		//glActiveTexture(GL_TEXTURE0);
 		//glBindTexture(GL_TEXTURE_2D, depthmap_texture);
 		//ourModel.Draw(testdepthShader);

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -314,14 +314,12 @@
     <None Include="res\shader\depthshader.fs" />
     <None Include="res\shader\depthshader.gs" />
     <None Include="res\shader\depthshader.vs" />
-    <None Include="res\shader\lighting.fs" />
-    <None Include="res\shader\lighting.vs" />
     <None Include="res\shader\light_cube.fs" />
     <None Include="res\shader\light_cube.vs" />
-    <None Include="res\shader\s.fs" />
-    <None Include="res\shader\s.vs" />
-    <None Include="res\shader\test_depth.fs" />
-    <None Include="res\shader\test_depth.vs" />
+    <None Include="res\shader\test_norm.fs" />
+    <None Include="res\shader\test_norm.vs" />
+    <None Include="res\shader\view.fs" />
+    <None Include="res\shader\view.vs" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\Downloads\assimp-5.2.5\build\include\assimp\config.h" />
