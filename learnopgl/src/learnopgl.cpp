@@ -90,6 +90,7 @@ int main()
     Shader shaderGbuffer("./res/shader/g.vs", "./res/shader/g.fs");
     Shader shaderTest("./res/shader/test_depth.vs", "./res/shader/test_depth.fs");
     Shader shaderSSAO("./res/shader/ssao.vs", "./res/shader/ssao.fs");
+    Shader shaderSSAOBlur("./res/shader/ssaoblur.vs", "./res/shader/ssaoblur.fs");
 
     Shader shaderBloomFinal("./res/shader/hdr.vs", "./res/shader/hdr.fs");
 
@@ -220,6 +221,7 @@ int main()
     shader.setInt("gPosition", 0);
     shader.setInt("gNormal", 1);
     shader.setInt("gAlbedoSpec", 2);
+    shader.setInt("ssao", 3);
 
     shaderBlur.use();
     shaderBlur.setInt("image", 0);
@@ -281,6 +283,19 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssaoColorBuffer, 0);
+    
+    // SSAO模糊使用的
+    GLuint ssaoBlurFBO, ssaoColorBufferBlur;
+    glGenFramebuffers(1, &ssaoBlurFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, ssaoBlurFBO);
+    glGenTextures(1, &ssaoColorBufferBlur);
+    glBindTexture(GL_TEXTURE_2D, ssaoColorBufferBlur);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssaoColorBufferBlur, 0);
+    
+    
     // render loop
     // -----------
     
@@ -382,8 +397,8 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
         shaderSSAO.use();
         shaderSSAO.setInt("gPosition", 0);
-        shaderSSAO.setInt("gNormal", 0);
-        shaderSSAO.setInt("texNoise", 0);
+        shaderSSAO.setInt("gNormal", 1);
+        shaderSSAO.setInt("texNoise", 2);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, gPosition);
         glActiveTexture(GL_TEXTURE1);
@@ -398,6 +413,23 @@ int main()
         renderQuad();
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+        // 在ssaoBlurFBO里，进行ssao模糊
+        glBindFramebuffer(GL_FRAMEBUFFER, ssaoBlurFBO);
+        glClear(GL_COLOR_BUFFER_BIT);
+        shaderSSAOBlur.use();
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
+        renderQuad();
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        // 进入hdrFBO进行处理
+         // debug:
+        //glActiveTexture(GL_TEXTURE0);
+        //glBindTexture(GL_TEXTURE_2D, pingpongColorbuffers[!horizontal]);
+        //shaderTest.use();
+        //renderQuad();
+
+
 
 
 
@@ -410,6 +442,10 @@ int main()
         GLCall(glBindTexture(GL_TEXTURE_2D, gNormal));
         GLCall(glActiveTexture(GL_TEXTURE2));
         GLCall(glBindTexture(GL_TEXTURE_2D, gAlbedoSpec));
+        GLCall(glActiveTexture(GL_TEXTURE3));
+
+        GLCall(glBindTexture(GL_TEXTURE_2D, ssaoColorBufferBlur));
+
         // 同样发送光照相关的uniform
 
         for (unsigned int i = 0; i < lightPositions.size(); i++)
