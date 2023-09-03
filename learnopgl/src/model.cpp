@@ -139,6 +139,7 @@ std::vector<Texture> Model::loadMaterialTextures(aiMaterial *mat, aiTextureType 
 			texture.path = str.C_Str();
 			textures.push_back(texture);
 			textures_loaded.push_back(texture);  //将其存储为整个模型加载的纹理，以确保我们不会加载重复纹理。
+			std::cout << "loading texture" << ";" << typeName << std::endl;
 		}
 	}
 	return textures;
