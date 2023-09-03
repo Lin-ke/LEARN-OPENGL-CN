@@ -5,7 +5,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
+#include <random>
 #include "shader.h"
 #include "camera.h"
 #include "model.h"
@@ -36,7 +36,10 @@ bool firstMouse = true;
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
-
+GLfloat lerp(GLfloat a, GLfloat b, GLfloat f)
+{
+    return a + f * (b - a);
+}
 int main()
 {
     // glfw: initialize and configure
@@ -86,6 +89,7 @@ int main()
     Shader shaderBlur("./res/shader/blur.vs", "./res/shader/blur.fs");
     Shader shaderGbuffer("./res/shader/g.vs", "./res/shader/g.fs");
     Shader shaderTest("./res/shader/test_depth.vs", "./res/shader/test_depth.fs");
+    Shader shaderSSAO("./res/shader/ssao.vs", "./res/shader/ssao.fs");
 
     Shader shaderBloomFinal("./res/shader/hdr.vs", "./res/shader/hdr.fs");
 
@@ -224,8 +228,62 @@ int main()
     shaderBloomFinal.setInt("bloomBlur", 1);
 
     Model ourModel("./res/model/keli.pmx");
+    // 半球采样核心
+    std::uniform_real_distribution<GLfloat> randomFloats(0.0, 1.0);
+    std::default_random_engine generator;
+    std::vector<glm::vec3> ssaoKernel;
+    for (GLuint i = 0; i < 64; ++i)
+    {
+        glm::vec3 sample(
+            randomFloats(generator) * 2.0 - 1.0,
+            randomFloats(generator) * 2.0 - 1.0,
+            randomFloats(generator)
+        );
+        sample = glm::normalize(sample);
+        sample *= randomFloats(generator);
+        GLfloat scale = GLfloat(i) / 64.0;
+        ssaoKernel.push_back(sample);
+
+        scale = lerp(0.1f, 1.0f, scale * scale);
+        sample *= scale;
+        ssaoKernel.push_back(sample);
+
+    }
+    std::vector<glm::vec3> ssaoNoise;
+    for (GLuint i = 0; i < 16; i++)
+    {
+        glm::vec3 noise(
+            randomFloats(generator) * 2.0 - 1.0,
+            randomFloats(generator) * 2.0 - 1.0,
+            0.0f);
+        ssaoNoise.push_back(noise);
+    }
+    //随机旋转纹理
+    GLuint noiseTexture;
+    glGenTextures(1, &noiseTexture);
+    glBindTexture(GL_TEXTURE_2D, noiseTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, 4, 4, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    // SSAO帧缓冲
+    // ------------------------
+    GLuint ssaoFBO;
+    glGenFramebuffers(1, &ssaoFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
+    GLuint ssaoColorBuffer;
+
+    glGenTextures(1, &ssaoColorBuffer);
+    glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssaoColorBuffer, 0);
     // render loop
     // -----------
+    
     while (!glfwWindowShouldClose(window))
     {
         glCullFace(GL_BACK);
@@ -247,24 +305,24 @@ int main()
         // 1. use g_buffer_shader to generate g_buffer.
         // -----------------------------------------------
         GLCall(glBindFramebuffer(GL_FRAMEBUFFER, gBuffer));
-        
-            GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-            glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-            glm::mat4 view = camera.GetViewMatrix();
-            glm::mat4 model = glm::mat4(1.0f);
-            shaderGbuffer.use();
-            shaderGbuffer.setMat4("projection", projection);
-            shaderGbuffer.setMat4("view", view);
 
-            // create one large cube that acts as the floor
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0));
-            model = glm::scale(model, glm::vec3(12.5f, 0.5f, 12.5f));
-            GLCall(glActiveTexture(GL_TEXTURE0));
-            GLCall(glBindTexture(GL_TEXTURE_2D, woodTexture));
-            shaderGbuffer.setMat4("model", model);
-            renderCube();
-            // then create multiple cubes as the scenery
+        GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        glm::mat4 view = camera.GetViewMatrix();
+        glm::mat4 model = glm::mat4(1.0f);
+        shaderGbuffer.use();
+        shaderGbuffer.setMat4("projection", projection);
+        shaderGbuffer.setMat4("view", view);
+
+        // create one large cube that acts as the floor
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0));
+        model = glm::scale(model, glm::vec3(12.5f, 0.5f, 12.5f));
+        GLCall(glActiveTexture(GL_TEXTURE0));
+        GLCall(glBindTexture(GL_TEXTURE_2D, woodTexture));
+        shaderGbuffer.setMat4("model", model);
+        renderCube();
+        // then create multiple cubes as the scenery
         GLCall(glBindTexture(GL_TEXTURE_2D, containerTexture));
 
 
@@ -315,13 +373,34 @@ int main()
         //);
         //
         //glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-       
         //glActiveTexture(GL_TEXTURE0);
         //glBindTexture(GL_TEXTURE_2D, gPosition);
         //shaderTest.use();
         //renderQuad();
-        // 2. Gbuffer -> hdr
+        // 2. Gbuffer -> SSAO
+        glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
+        glClear(GL_COLOR_BUFFER_BIT);
+        shaderSSAO.use();
+        shaderSSAO.setInt("gPosition", 0);
+        shaderSSAO.setInt("gNormal", 0);
+        shaderSSAO.setInt("texNoise", 0);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, gPosition);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, gNormal);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, noiseTexture);
+        // SendKernelSamplesToShader
+        for (unsigned int i = 0; i < 64; ++i)
+            shaderSSAO.setVec3("samples[" + std::to_string(i) + "]", ssaoKernel[i]);
+        // 注意这个是在切线空间
+        shaderSSAO.setMat4("projection", projection);
+        renderQuad();
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+
+
         GLCall(glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO));
         GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
         shader.use();
@@ -350,22 +429,21 @@ int main()
             0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_DEPTH_BUFFER_BIT, GL_NEAREST
         ));
 
-        // HDR
         //// finally show all the light sources as bright cubes
-        shaderLight.use();
-        shaderLight.setMat4("projection", projection);
-        shaderLight.setMat4("view", view);
-        for (unsigned int i = 0; i < lightPositions.size(); i++)
-        {
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, lightPositions[i]);
-            model = glm::scale(model, glm::vec3(0.125f));
-            shaderLight.setMat4("model", model);
-            shaderLight.setVec3("lightColor", lightColors[i]);
-            renderCube();
-        }
+        //shaderLight.use();
+        //shaderLight.setMat4("projection", projection);
+        //shaderLight.setMat4("view", view);
+        //for (unsigned int i = 0; i < lightPositions.size(); i++)
+        //{
+        //    model = glm::mat4(1.0f);
+        //    model = glm::translate(model, lightPositions[i]);
+        //    model = glm::scale(model, glm::vec3(0.125f));
+        //    shaderLight.setMat4("model", model);
+        //    shaderLight.setVec3("lightColor", lightColors[i]);
+        //    renderCube();
+        //}
 
-        GLCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+        //GLCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
         // debug:
         //glActiveTexture(GL_TEXTURE0);
         //glBindTexture(GL_TEXTURE_2D, colorBuffers[1]);

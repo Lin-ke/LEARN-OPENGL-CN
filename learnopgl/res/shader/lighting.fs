@@ -7,13 +7,15 @@ in vec2 TexCoords;
 uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 uniform sampler2D gAlbedoSpec;
+uniform sampler2D ssao;
 
 struct Light {
     vec3 Position;
     vec3 Color;
-    
+
     float Linear;
     float Quadratic;
+    float Radius;
 };
 const int NR_LIGHTS = 32;
 uniform Light lights[NR_LIGHTS];
@@ -26,9 +28,9 @@ void main()
     vec3 Normal = texture(gNormal, TexCoords).rgb;
     vec3 Diffuse = texture(gAlbedoSpec, TexCoords).rgb;
     float Specular = texture(gAlbedoSpec, TexCoords).a;
-    
+    float AmbientOcclusion = texture(ssao, TexCoords).r;
     // then calculate lighting as usual
-    vec3 lighting  = Diffuse * 0.1; // hard-coded ambient component
+    vec3 lighting  = Diffuse * 0.5 * AmbientOcclusion; // hard-coded ambient component
     vec3 viewDir  = normalize(viewPos - FragPos);
     for(int i = 0; i < NR_LIGHTS; ++i)
     {

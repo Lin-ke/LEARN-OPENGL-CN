@@ -325,6 +325,8 @@
     <None Include="res\shader\light_cube.vs" />
     <None Include="res\shader\blur.fs" />
     <None Include="res\shader\blur.vs" />
+    <None Include="res\shader\ssao.fs" />
+    <None Include="res\shader\ssao.vs" />
     <None Include="res\shader\test_depth.fs" />
     <None Include="res\shader\test_depth.vs" />
   </ItemGroup>

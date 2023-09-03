@@ -741,6 +741,47 @@ glBlitFramebuffer(
 如果样本数量太低，渲染的精度会急剧减少，我们会得到一种叫做波纹(Banding)的效果；如果它太高了，反而会影响性能。我们可以通过引入随机性到采样核心(Sample Kernel)的采样中从而减少样本的数目。因为使用的采样核心是一个球体，它导致平整的墙面也会显得灰蒙蒙的，因为核心中一半的样本都会在墙这个几何体上。
 ![](2023-09-02-22-05-33.png)
 
-## 实现
-SSAO
-![](2023-09-02-22-06-02.png)
+## 法向半球
+我们需要沿着表面法线方向生成大量的样本。由于对每个表面法线方向生成采样核心非常困难，也不合实际，我们将在切线空间(Tangent Space)内生成采样核心，法向量将指向正z方向。
+
+代码：通过uniform_real_distribution实现。另外用加速插值函数将核心样本靠近原点分布，
+```c
+   scale = lerp(0.1f, 1.0f, scale * scale);
+   sample *= scale;
+   ssaoKernel.push_back(sample);  
+}
+
+lerp被定义为：
+
+GLfloat lerp(GLfloat a, GLfloat b, GLfloat f)
+{
+    return a + f * (b - a);
+}
+
+```
+![](2023-09-03-10-50-53.png)
+## 随机核心转动
+我们可以对场景中每一个片段创建一个随机旋转向量，但这会很快将内存耗尽。所以，更好的方法是创建一个小的随机旋转向量纹理平铺在屏幕上。由于采样核心是沿着正z方向在切线空间内旋转，我们设定z分量为0.0，从而围绕z轴旋转。
+
+这个纹理（4*4，16个随机向量）需要的是repeat。
+# 实现
+要注意，我们需要的是观察空间的法线。法线的坐标系统需要和fragPos的保持一致，这里使用的是view。至于glPosition，需要到屏幕空间。
+
+ Samples位于切线空间，法线为(0,0,1)，需要：
+ 1. 转动，
+ 2. 通过TBN到观察空间。
+
+normal (0,0,1) -> texture(normal, textcoord);
+
+通过使用一个叫做Gramm-Schmidt处理(Gramm-Schmidt Process)的过程，我们创建了一个正交基(Orthogonal Basis)，每一次它都会根据randomVec的值稍微倾斜。由于我们不知道这个旋转坐标在观察坐标系是什么，因此使用这种方式估计它。
+
+vec3 tangent = normalize(randomVec - normal * dot(randomVec, normal));
+
+以及bitangent  = cross(normal, tangent);
+
+加上取样半径
+samplePos = fragPos + samplePos * radius; 
+
+接下来我们变换sample到屏幕空间，从而我们可以就像正在直接渲染它的位置到屏幕上一样取样sample的(线性)深度值。由于这个向量目前在观察空间，我们将首先使用projection矩阵uniform变换它到裁剪空间。在变量被变换到裁剪空间之后，我们用**xyz分量除以w分量进行透视划分。结果所得的标准化设备坐标之后变换到[0.0, 1.0]范围以便我们使用它们去取样深度纹理**。（注意：对于glPosition， opengl会自动帮你进行透视除法。）
+
+现在offset已经在屏幕空间中了，当作纹理坐标对观察空间采样来得到深度值。这件事能做是因为，由于我们制作好了GLPosition这个变量，他们已经被投影到屏幕空间当中，并且每个顶点附带有几何信息，比如“在观察空间中的深度”。
